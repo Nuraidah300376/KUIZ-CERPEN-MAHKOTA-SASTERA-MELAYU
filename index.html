@@ -1,0 +1,2506 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>EduMart Quest KMK V1.1 - Tiga Tahap Eksplorasi</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Three.js Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Font Awesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Canvas Confetti for Victory celebration -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <!-- Pustaka html2canvas & jsPDF untuk Muat Turun PNG & PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&family=Cinzel:wght@700;900&display=swap');
+    
+    * {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      box-sizing: border-box;
+    }
+    
+    .font-serif-cert {
+      font-family: 'Cinzel', serif;
+    }
+    
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #1e1b4b;
+      position: fixed;
+      touch-action: none;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    #game-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+    }
+
+    /* iOS Safe Area Inset Support & Responsive Layouts */
+    .safe-top {
+      top: max(0.5rem, env(safe-area-inset-top));
+    }
+    .safe-bottom {
+      bottom: max(0.75rem, env(safe-area-inset-bottom));
+    }
+    .safe-left {
+      left: max(0.5rem, env(safe-area-inset-left));
+    }
+    .safe-right {
+      right: max(0.5rem, env(safe-area-inset-right));
+    }
+
+    /* Dynamic Touch Joystick Styling (Ergonomic & Mobile-First) */
+    .joystick-base {
+      width: clamp(96px, 22vw, 128px);
+      height: clamp(96px, 22vw, 128px);
+      background: rgba(255, 255, 255, 0.45);
+      border: 3px solid rgba(244, 114, 182, 0.75);
+      border-radius: 50%;
+      position: absolute;
+      touch-action: none;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 25;
+    }
+
+    .joystick-knob {
+      width: clamp(42px, 9.5vw, 54px);
+      height: clamp(42px, 9.5vw, 54px);
+      background: linear-gradient(135deg, #ec4899, #f43f5e);
+      box-shadow: 0 4px 14px rgba(236, 72, 153, 0.55);
+      border-radius: 50%;
+      pointer-events: none;
+      transition: transform 0.04s ease-out;
+      border: 2px solid rgba(255, 255, 255, 0.9);
+    }
+
+    /* Custom subtle scrollbar for modals */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #f472b6;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.04);
+    }
+
+    /* Print styles for digital certificate */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #digital-certificate, #digital-certificate * {
+        visibility: visible;
+      }
+      #digital-certificate {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        border: 4px solid #b45309;
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body class="relative w-full h-full overflow-hidden select-none">
+
+  <!-- 3D Canvas -->
+  <canvas id="game-canvas"></canvas>
+
+  <!-- ==================== HUD HEADER (RESPONSIVE & ADAPTIVE) ==================== -->
+  <div id="hud-bar" class="absolute safe-top safe-left safe-right flex items-center justify-between pointer-events-none z-20 gap-1.5 sm:gap-2">
+    <!-- Profil & Nama Pelajar -->
+    <div class="bg-white/95 backdrop-blur-md px-2 py-1 sm:px-3 sm:py-1.5 md:px-3.5 md:py-2 rounded-2xl shadow-lg border border-pink-200 flex items-center space-x-1.5 sm:space-x-2 md:space-x-3 pointer-events-auto shrink-0 max-w-[48%] sm:max-w-none">
+      <div id="hud-avatar" class="w-7 h-7 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full bg-pink-500 text-white flex items-center justify-center font-bold text-xs sm:text-base md:text-lg shadow-sm transition-colors duration-500 shrink-0">
+        <i class="fa-solid fa-graduation-cap"></i>
+      </div>
+      <div class="min-w-0">
+        <div class="flex items-center space-x-1">
+          <span id="hud-level-badge" class="px-1.5 py-0.2 rounded-full text-[8px] sm:text-[9px] md:text-[10px] font-black uppercase bg-pink-100 text-pink-700">L1</span>
+          <span id="hud-class-tag" class="text-[8px] sm:text-[9px] md:text-[10px] font-semibold text-gray-500 truncate max-w-[55px] sm:max-w-[75px] md:max-w-none">5 Sastera</span>
+        </div>
+        <div id="hud-name" class="text-[11px] sm:text-xs md:text-sm font-bold text-gray-800 truncate max-w-[70px] sm:max-w-[110px] md:max-w-[160px]">Pelajar KMK</div>
+      </div>
+    </div>
+
+    <!-- Statistik Permainan (Item, Markah, Masa, Panel Guru) -->
+    <div class="flex items-center space-x-1 sm:space-x-1.5 md:space-x-2 shrink-0">
+      <!-- Item Dikumpul -->
+      <div class="bg-white/95 backdrop-blur-md px-2 py-1 sm:px-2.5 sm:py-1.5 md:px-3 md:py-2 rounded-2xl shadow-lg border border-pink-200 flex items-center space-x-1 sm:space-x-1.5 pointer-events-auto">
+        <i class="fa-solid fa-box-open text-pink-500 text-xs sm:text-sm"></i>
+        <div class="text-[10px] sm:text-[11px] md:text-xs font-bold text-gray-700"><span class="hidden sm:inline" id="hud-items-label">Item: </span><span id="hud-items" class="text-pink-600 font-extrabold">0/5</span></div>
+      </div>
+
+      <!-- Markah Terkumpul -->
+      <div class="bg-white/95 backdrop-blur-md px-2 py-1 sm:px-2.5 sm:py-1.5 md:px-3.5 md:py-2 rounded-2xl shadow-lg border border-pink-200 flex items-center space-x-1 sm:space-x-1.5 pointer-events-auto">
+        <i class="fa-solid fa-star text-amber-400 text-xs sm:text-sm md:text-base"></i>
+        <div>
+          <div class="text-[7px] sm:text-[8px] md:text-[9px] text-gray-500 font-semibold leading-tight hidden xs:block">Mata</div>
+          <div id="hud-score" class="text-[11px] sm:text-xs md:text-base font-black text-pink-600 leading-none">0</div>
+        </div>
+      </div>
+
+      <!-- Pemasa -->
+      <div id="hud-timer-container" class="bg-white/95 backdrop-blur-md px-2 py-1 sm:px-2.5 sm:py-1.5 md:px-3 md:py-2 rounded-2xl shadow-lg border border-pink-200 flex items-center space-x-1 pointer-events-auto">
+        <i class="fa-solid fa-stopwatch text-indigo-500 text-xs sm:text-sm"></i>
+        <span id="hud-timer" class="font-mono font-bold text-[10px] sm:text-[11px] md:text-sm text-gray-700">00:00</span>
+      </div>
+
+      <!-- Butang Panel Guru -->
+      <button onclick="toggleTeacherModal()" title="Panel Kawalan Guru" class="bg-white/95 backdrop-blur-md w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-2xl shadow-lg border border-indigo-200 flex items-center justify-center text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 active:scale-95 transition pointer-events-auto shrink-0 touch-manipulation">
+        <i class="fa-solid fa-sliders text-xs sm:text-sm md:text-base"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Petunjuk Lokasi / Panduan Semasa & Peringatan Pengesahan Guru (Mobile Adaptive) -->
+  <div class="absolute top-12 sm:top-14 md:top-16 left-1/2 -translate-x-1/2 pointer-events-none z-10 w-11/12 max-w-md flex flex-col items-center space-y-1">
+    <div id="location-guide" class="bg-white/95 backdrop-blur-md border border-pink-200 px-2.5 sm:px-3 md:px-4 py-1 sm:py-1 md:py-1.5 rounded-full shadow-md text-center text-[9px] sm:text-[10px] md:text-xs font-semibold text-gray-700 transition-all duration-300 w-full truncate">
+      <i class="fa-solid fa-compass text-pink-500 mr-1 animate-pulse"></i>
+      <span id="guide-text">Tingkat 1: Cari 5 modul naskhah bercahaya di sekitar pasar raya!</span>
+    </div>
+
+    <!-- Banner Makluman Pengesahan Guru -->
+    <div id="teacher-verification-banner" class="hidden bg-amber-500/90 text-white text-[8px] sm:text-[9px] md:text-[11px] font-bold px-3 py-0.5 rounded-full shadow border border-amber-300 flex items-center space-x-1.5 animate-pulse text-center">
+      <i class="fa-solid fa-triangle-exclamation shrink-0"></i>
+      <span class="truncate">Bank soalan mengandungi draf demonstrasi. Sila sahkan di Panel Guru.</span>
+    </div>
+  </div>
+
+  <!-- ==================== BUTANG INTERAKSI ("TEKAN AMBIL") ==================== -->
+  <div id="pickup-prompt" class="absolute safe-bottom safe-right z-20 hidden transition-all transform duration-150 mb-1 sm:mb-2">
+    <button id="btn-pickup" onclick="triggerPickupAction()" class="group flex items-center space-x-2 md:space-x-3 bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600 active:from-pink-600 active:to-rose-700 text-white font-extrabold px-3.5 py-2.5 sm:px-4 sm:py-3 md:px-6 md:py-4 rounded-2xl md:rounded-3xl shadow-2xl border-2 border-white/80 active:scale-95 transition touch-manipulation min-h-[48px] min-w-[120px]">
+      <div id="pickup-icon-wrap" class="w-6 h-6 sm:w-7 sm:h-7 md:w-9 md:h-9 rounded-full bg-white/20 flex items-center justify-center text-xs sm:text-sm md:text-lg animate-bounce shrink-0">
+        <i class="fa-solid fa-hand-holding-heart"></i>
+      </div>
+      <div class="text-left">
+        <div id="pickup-sub" class="text-[8px] sm:text-[9px] md:text-[10px] tracking-wider text-pink-100 uppercase hidden sm:block">Jarak Aktif</div>
+        <div id="pickup-label" class="text-[11px] sm:text-xs md:text-base leading-tight tracking-wide font-black">AMBIL <span class="text-[10px] bg-white/30 px-1 py-0.5 rounded ml-1 font-mono hidden md:inline">[E]</span></div>
+      </div>
+    </button>
+  </div>
+
+  <!-- Peringatan Item Pengganggu (Level 2 Decoy Alert) -->
+  <div id="decoy-toast" class="fixed top-20 sm:top-24 md:top-28 left-1/2 -translate-x-1/2 bg-amber-600 text-white font-bold text-[9px] sm:text-[10px] md:text-xs px-3 py-1.5 sm:px-3.5 sm:py-1.5 md:px-4 md:py-2 rounded-2xl shadow-xl border border-amber-400 z-50 transition-all opacity-0 pointer-events-none transform -translate-y-2 max-w-[90vw] text-center">
+    <i class="fa-solid fa-ban mr-1.5"></i> Item ini adalah perangkap/pengganggu! Tiada markah diberikan.
+  </div>
+
+  <!-- ==================== KAWALAN SENTUHAN MUDAH ALIH (VIRTUAL JOYSTICK) ==================== -->
+  <div id="touch-controls" class="absolute inset-0 pointer-events-none z-10 block">
+    <div id="joystick-zone" class="joystick-base safe-bottom safe-left pointer-events-auto">
+      <div id="joystick-knob" class="joystick-knob"></div>
+    </div>
+  </div>
+
+  <!-- Petunjuk Kekunci Desktop -->
+  <div class="hidden lg:flex absolute bottom-4 left-44 bg-white/85 backdrop-blur-md px-3 py-1 rounded-xl border border-gray-200 text-[11px] font-semibold text-gray-700 items-center space-x-1.5 pointer-events-none z-10 shadow-sm">
+    <span class="bg-gray-200 px-1.5 py-0.5 rounded text-gray-800 font-mono text-[10px]">W A S D</span>
+    <span>atau</span>
+    <span class="bg-gray-200 px-1.5 py-0.5 rounded text-gray-800 font-mono text-[10px]">ANAK PANAH</span>
+    <span>Bergerak |</span>
+    <span class="bg-gray-200 px-1.5 py-0.5 rounded text-gray-800 font-mono text-[10px]">E</span>
+    <span>Interaksi</span>
+  </div>
+
+  <!-- ==================== MODAL MULA PERMAINAN ==================== -->
+  <div id="modal-start" class="fixed inset-0 bg-indigo-950/75 backdrop-blur-md flex items-center justify-center z-50 p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl p-5 sm:p-6 md:p-8 max-w-md w-full shadow-2xl border-4 border-pink-200 text-center relative my-auto max-h-[92vh] overflow-y-auto">
+      <div class="w-16 h-16 sm:w-20 sm:h-20 mx-auto bg-gradient-to-tr from-pink-400 via-rose-500 to-indigo-500 rounded-3xl flex items-center justify-center text-white text-2xl sm:text-3xl shadow-lg mb-2.5">
+        <i class="fa-solid fa-shapes"></i>
+      </div>
+      <h1 class="text-xl sm:text-2xl md:text-3xl font-black text-gray-800 tracking-tight">EduMart Quest KMK</h1>
+      <p class="text-[10px] sm:text-xs font-black text-pink-600 uppercase tracking-widest mt-0.5">Edisi 3 Level Berperingkat V1.1</p>
+      
+      <p class="text-[11px] sm:text-xs text-gray-600 mt-2 leading-relaxed">
+        Selesaikan 3 aras eksplorasi cerpen KMK: <strong>Level 1 (Asas)</strong>, <strong>Level 2 (Pemburu Fakta)</strong>, dan <strong>Level 3 (Master Sastera)</strong> untuk merangkul sijil digital kecemerlangan!
+      </p>
+
+      <div class="mt-3.5 grid grid-cols-1 sm:grid-cols-2 gap-2 text-left">
+        <div>
+          <label class="block text-[10px] sm:text-[11px] font-bold text-gray-700 mb-0.5 ml-1">Nama Pelajar:</label>
+          <input type="text" id="input-player-name" value="Ahmad Faris" class="w-full px-3 py-2 bg-pink-50/50 border border-pink-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500 font-semibold text-gray-800 text-xs">
+        </div>
+        <div>
+          <label class="block text-[10px] sm:text-[11px] font-bold text-gray-700 mb-0.5 ml-1">Tingkatan / Kelas:</label>
+          <input type="text" id="input-player-class" value="5 Gemilang" class="w-full px-3 py-2 bg-pink-50/50 border border-pink-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500 font-semibold text-gray-800 text-xs">
+        </div>
+      </div>
+
+      <div class="mt-3 bg-indigo-50 border border-indigo-200 rounded-2xl p-2.5 sm:p-3 text-left text-[10px] sm:text-[11px] space-y-1 text-indigo-900">
+        <div class="font-bold flex items-center space-x-1 text-indigo-700">
+          <i class="fa-solid fa-trophy text-amber-500"></i>
+          <span>Peraturan & Syarat Kelayakan 3 Level:</span>
+        </div>
+        <div>• <strong>Level 1:</strong> 5 Item Asas | Syarat Lulus: ≥ 3/5 Betul (+100 Bonus)</div>
+        <div>• <strong>Level 2:</strong> 5 Fakta + Perangkap | Syarat: ≥ 4/5 Betul (+200 Bonus)</div>
+        <div>• <strong>Level 3:</strong> 5 Analisis Master | Syarat: ≥ 4/5 Betul (+300 Bonus)</div>
+      </div>
+
+      <button onclick="startGame()" class="mt-4 sm:mt-5 w-full py-3 sm:py-3.5 bg-gradient-to-r from-pink-500 via-rose-500 to-indigo-600 hover:from-pink-600 hover:to-indigo-700 text-white font-extrabold rounded-2xl shadow-xl shadow-pink-500/25 transform active:scale-95 transition text-xs sm:text-sm flex items-center justify-center space-x-2">
+        <span>MULAKAN LEVEL 1</span>
+        <i class="fa-solid fa-arrow-right"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL KUIZ KMK (5 SOALAN SELEVEL) ==================== -->
+  <div id="modal-quiz" class="fixed inset-0 bg-black/65 backdrop-blur-sm flex items-center justify-center z-40 p-3 sm:p-4 hidden overflow-y-auto">
+    <div class="bg-white rounded-3xl p-4 sm:p-6 md:p-8 max-w-lg w-full shadow-2xl border-4 border-pink-200 relative my-auto max-h-[92vh] flex flex-col">
+      
+      <!-- Lencana Status Soalan & Pengesahan -->
+      <div class="flex items-center justify-between pb-2.5 border-b border-pink-100 flex-wrap gap-1 shrink-0">
+        <span id="quiz-status-badge" class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-extrabold bg-amber-100 text-amber-800 border border-amber-300">
+          <i class="fa-solid fa-vial mr-1"></i> Draf Ujian Guru
+        </span>
+        <div class="flex items-center space-x-1.5">
+          <span id="quiz-level-tag" class="text-[9px] sm:text-[10px] font-black uppercase text-pink-700 bg-pink-100 px-2 py-0.5 rounded-full">Level 1</span>
+          <span id="quiz-item-badge" class="text-[10px] sm:text-xs font-extrabold text-pink-600 bg-pink-50 px-2.5 py-0.5 rounded-full">Soalan 1/5</span>
+        </div>
+      </div>
+
+      <!-- Info Konstruk & Cerpen -->
+      <div class="mt-2 text-[10px] sm:text-[11px] font-bold text-gray-500 flex items-center justify-between shrink-0">
+        <span id="quiz-cerpen-text" class="truncate max-w-[50%]">Cerpen: Seru</span>
+        <span id="quiz-konstruk-text" class="text-pink-600 truncate max-w-[48%] text-right">Konstruk: Tema & Persoalan</span>
+      </div>
+
+      <!-- Teks Soalan (Boleh Skrol jika panjang) -->
+      <div class="mt-2.5 overflow-y-auto flex-1 pr-1">
+        <h3 id="quiz-question" class="text-xs sm:text-sm md:text-base font-bold text-gray-900 leading-snug">
+          Memuatkan soalan...
+        </h3>
+
+        <!-- Pilihan Jawapan A, B, C, D -->
+        <div id="quiz-options" class="mt-3 space-y-2">
+          <!-- Dijana Dinamik -->
+        </div>
+
+        <!-- Kotak Maklum Balas Jawapan -->
+        <div id="quiz-feedback-box" class="mt-3 p-3 sm:p-4 rounded-2xl hidden border transition-all">
+          <div id="quiz-feedback-title" class="font-extrabold text-xs sm:text-sm flex items-center space-x-1.5"></div>
+          <p id="quiz-feedback-desc" class="text-[11px] sm:text-xs text-gray-700 mt-1 leading-relaxed"></p>
+          <button id="btn-next-quiz" onclick="closeQuizModal()" class="mt-2.5 w-full py-2.5 bg-gray-900 text-white rounded-xl text-xs font-bold hover:bg-black active:scale-98 transition">
+            Teruskan Eksplorasi
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL KEPUTUSAN ANTARA LEVEL (LULUS / GAGAL) ==================== -->
+  <div id="modal-level-result" class="fixed inset-0 bg-black/75 backdrop-blur-md flex items-center justify-center z-50 p-3 sm:p-4 hidden overflow-y-auto">
+    <div class="bg-white rounded-3xl p-5 sm:p-6 md:p-8 max-w-md w-full shadow-2xl border-4 text-center relative my-auto max-h-[92vh] overflow-y-auto">
+      <div id="level-result-icon" class="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-3xl flex items-center justify-center text-white text-2xl sm:text-3xl shadow-lg mb-2.5">
+        <i class="fa-solid fa-award"></i>
+      </div>
+
+      <h2 id="level-result-title" class="text-xl sm:text-2xl font-black text-gray-800">KEPUTUSAN LEVEL</h2>
+      <p id="level-result-subtitle" class="text-[10px] sm:text-xs font-extrabold uppercase tracking-widest mt-0.5 text-pink-600">Tahap Selesai</p>
+      
+      <p id="level-result-desc" class="text-[11px] sm:text-xs text-gray-600 mt-2 leading-relaxed">
+        Penerangan ringkas kelulusan level.
+      </p>
+
+      <!-- Kotak Statistik Skor Level -->
+      <div class="my-3 sm:my-4 bg-gray-50 border border-gray-200 rounded-2xl p-3 sm:p-4 text-left space-y-1.5 text-[11px] sm:text-xs">
+        <div class="flex justify-between text-gray-600">
+          <span>Jawapan Betul:</span>
+          <span id="level-result-correct" class="font-bold text-gray-900">0 / 5</span>
+        </div>
+        <div class="flex justify-between text-gray-600">
+          <span>Syarat Kelayakan:</span>
+          <span id="level-result-threshold" class="font-bold text-gray-900">≥ 3 / 5</span>
+        </div>
+        <div class="flex justify-between text-gray-600">
+          <span>Mata Soalan Diperoleh:</span>
+          <span id="level-result-score" class="font-bold text-gray-900">0 Mata</span>
+        </div>
+        <div class="flex justify-between text-gray-600">
+          <span>Bonus Lulus:</span>
+          <span id="level-result-bonus" class="font-bold text-emerald-600">+0 Mata</span>
+        </div>
+        <hr class="border-gray-200 my-1">
+        <div class="flex justify-between text-xs sm:text-sm font-extrabold text-pink-700">
+          <span>Lencana Diterima:</span>
+          <span id="level-result-badge-earned" class="text-[10px] sm:text-xs font-black text-pink-600 bg-pink-100 px-2 py-0.5 rounded-full">-</span>
+        </div>
+      </div>
+
+      <!-- Tindakan Butang: Seterusnya / Cuba Lagi -->
+      <div id="level-result-actions" class="space-y-2">
+        <button id="btn-next-level" onclick="proceedToNextLevel()" class="w-full py-3 sm:py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold rounded-2xl shadow-xl shadow-emerald-500/30 transform active:scale-95 transition text-xs sm:text-sm flex items-center justify-center space-x-2">
+          <span>BUKA TAHAP SETERUSNYA</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+
+        <button id="btn-retry-level" onclick="retryCurrentLevel()" class="w-full py-3 sm:py-3.5 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-extrabold rounded-2xl shadow-xl shadow-rose-500/30 transform active:scale-95 transition text-xs sm:text-sm flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-rotate-left"></i>
+          <span>CUBA LAGI TAHAP INI</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL KEPUTUSAN KESELURUHAN & SIJIL DIGITAL ==================== -->
+  <div id="modal-victory" class="fixed inset-0 bg-indigo-950/85 backdrop-blur-md flex items-center justify-center z-50 p-3 sm:p-4 hidden overflow-y-auto">
+    <div class="bg-white rounded-3xl p-4 sm:p-6 md:p-8 max-w-xl w-full shadow-2xl border-4 border-amber-300 text-center relative my-auto max-h-[94vh] overflow-y-auto">
+      
+      <div class="w-16 h-16 sm:w-20 sm:h-20 mx-auto bg-gradient-to-tr from-amber-400 via-yellow-400 to-amber-500 rounded-3xl flex items-center justify-center text-white text-2xl sm:text-3xl shadow-xl shadow-amber-500/40 mb-2 border-4 border-white">
+        <i class="fa-solid fa-crown animate-bounce"></i>
+      </div>
+
+      <h2 class="text-xl sm:text-2xl md:text-3xl font-black text-gray-800">TAHNIAH, MASTER SASTERA!</h2>
+      <p class="text-[10px] sm:text-xs font-extrabold text-amber-600 uppercase tracking-widest mt-0.5">Semua 3 Level Berjaya Ditamatkan</p>
+
+      <!-- Ringkasan Markah Setiap Level -->
+      <div class="mt-3 bg-gradient-to-br from-amber-50/70 to-pink-50/70 border border-amber-200 rounded-2xl p-3 sm:p-4 text-left text-xs space-y-2">
+        <div class="flex justify-between font-bold text-gray-700 border-b pb-1 text-[11px] sm:text-xs">
+          <span>Pemain: <span id="cert-display-name" class="text-pink-600 font-extrabold">Nama</span> (<span id="cert-display-class">Kelas</span>)</span>
+          <span>Jumlah Masa: <span id="cert-display-time" class="text-gray-900 font-mono">00:00</span></span>
+        </div>
+        <div class="grid grid-cols-3 gap-1.5 sm:gap-2 pt-1 text-center">
+          <div class="bg-white/80 p-1.5 sm:p-2 rounded-xl border border-pink-100 shadow-sm">
+            <div class="text-[9px] sm:text-[10px] text-gray-500 font-bold uppercase">Level 1</div>
+            <div id="summary-l1-score" class="font-black text-pink-600 text-xs sm:text-sm">0 Mata</div>
+            <div id="summary-l1-correct" class="text-[9px] sm:text-[10px] text-gray-500">5/5 Betul</div>
+          </div>
+          <div class="bg-white/80 p-1.5 sm:p-2 rounded-xl border border-purple-100 shadow-sm">
+            <div class="text-[9px] sm:text-[10px] text-gray-500 font-bold uppercase">Level 2</div>
+            <div id="summary-l2-score" class="font-black text-purple-600 text-xs sm:text-sm">0 Mata</div>
+            <div id="summary-l2-correct" class="text-[9px] sm:text-[10px] text-gray-500">5/5 Betul</div>
+          </div>
+          <div class="bg-white/80 p-1.5 sm:p-2 rounded-xl border border-amber-100 shadow-sm">
+            <div class="text-[9px] sm:text-[10px] text-gray-500 font-bold uppercase">Level 3</div>
+            <div id="summary-l3-score" class="font-black text-amber-600 text-xs sm:text-sm">0 Mata</div>
+            <div id="summary-l3-correct" class="text-[9px] sm:text-[10px] text-gray-500">5/5 Betul</div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center pt-1.5 border-t text-xs sm:text-sm font-black text-indigo-950">
+          <span>JUMLAH MARKAH AKHIR:</span>
+          <span id="victory-total-score" class="text-lg sm:text-xl font-black text-pink-600">0</span>
+        </div>
+      </div>
+
+      <!-- KOTAK SIJIL DIGITAL RESMI -->
+      <div id="digital-certificate" class="mt-3 p-3.5 sm:p-5 bg-gradient-to-b from-amber-50/50 via-white to-amber-50/50 border-4 border-double border-amber-400 rounded-2xl relative shadow-md text-center">
+        <div class="absolute top-2 left-2 text-amber-400 text-xs"><i class="fa-solid fa-award"></i></div>
+        <div class="absolute top-2 right-2 text-amber-400 text-xs"><i class="fa-solid fa-award"></i></div>
+        <div class="text-[9px] sm:text-[10px] tracking-widest text-amber-800 font-black uppercase font-serif-cert">Sijil Penghargaan Tamat Eksplorasi</div>
+        <h4 class="text-sm sm:text-base font-black text-gray-900 mt-0.5 uppercase font-serif-cert">EDUMART QUEST KMK</h4>
+        <div class="text-[10px] sm:text-[11px] text-gray-600 mt-1">Dengan ini memperakui bahawa</div>
+        <div id="cert-student-name" class="text-base sm:text-lg font-black text-pink-700 underline decoration-pink-300 mt-0.5">NAMA PELAJAR</div>
+        <div class="text-[10px] text-gray-500 mt-0.5">Tingkatan <span id="cert-student-class" class="font-bold">5 Gemilang</span></div>
+        <div class="text-[10px] sm:text-[11px] text-gray-700 mt-1 leading-tight">
+          Telah berjaya menyelesaikan ketiga-tiga tahap cabaran cerpen KMK dengan cemerlang dan dianugerahkan lencana rasmi:
+        </div>
+        <div class="flex flex-wrap items-center justify-center gap-1.5 mt-2">
+          <span class="text-[9px] sm:text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-full font-bold">🌿 Penjelajah Ilmu</span>
+          <span class="text-[9px] sm:text-[10px] bg-purple-100 text-purple-800 border border-purple-300 px-2 py-0.5 rounded-full font-bold">🎯 Pemburu Fakta</span>
+          <span class="text-[9px] sm:text-[10px] bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-full font-bold">👑 Master Sastera</span>
+        </div>
+        <div class="mt-2.5 flex justify-between items-end text-[8px] sm:text-[9px] text-gray-400 pt-1.5 border-t border-amber-200">
+          <span>Kod: KMK-V1.1-OK</span>
+          <span id="cert-date">Tarikh: 2026</span>
+          <span>Status: SAH GURU</span>
+        </div>
+      </div>
+
+      <!-- ==================== STATUS PENGHANTARAN GOOGLE SHEETS ==================== -->
+      <div id="sheets-sync-card" class="mt-3 p-2.5 rounded-2xl border text-left text-xs bg-gray-50 border-gray-200 transition-all">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span id="sheets-status-icon" class="text-indigo-600 text-sm"><i class="fa-solid fa-cloud-arrow-up animate-pulse"></i></span>
+            <div>
+              <div class="font-extrabold text-[11px] sm:text-xs text-gray-800" id="sheets-status-title">Sinkronisasi Pangkalan Data</div>
+              <div class="text-[9px] sm:text-[10px] text-gray-500 font-mono truncate max-w-[200px] sm:max-w-xs" id="sheets-status-desc">Menghubungi pelayan Google Sheets...</div>
+            </div>
+          </div>
+          <button id="btn-retry-sync" onclick="retrySubmitToGoogleSheets()" class="hidden px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-[10px] font-bold active:scale-95 transition shadow-sm">
+            <i class="fa-solid fa-rotate-right mr-1"></i> Cuba Semula
+          </button>
+        </div>
+      </div>
+
+      <!-- Notifikasi Status Muat Turun -->
+      <div id="cert-download-status" class="mt-2 text-xs font-bold text-indigo-700 hidden">
+        <i class="fa-solid fa-spinner fa-spin mr-1"></i> Sedang menjana sijil... Sila tunggu sebentar.
+      </div>
+
+      <!-- Kad Integrasi Google Sheets (Status Telus & Hantar Semula) -->
+      <div id="sheets-sync-card" class="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-2xl text-left text-xs transition-all">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <div id="sheets-status-icon" class="w-6 h-6 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-xs">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+            </div>
+            <div>
+              <div id="sheets-status-title" class="font-bold text-slate-800 text-[11px] sm:text-xs">Penyegerakan Google Sheets</div>
+              <div id="sheets-status-desc" class="text-[10px] sm:text-[11px] text-slate-500">Menghantar rekod ke pangkalan data guru...</div>
+            </div>
+          </div>
+          <button id="btn-sheets-retry" onclick="retrySubmitToGoogleSheets()" class="hidden px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[10px] font-bold transition active:scale-95 shadow-sm">
+            <i class="fa-solid fa-rotate-right mr-1"></i> Hantar Semula Rekod
+          </button>
+        </div>
+        <div class="mt-1.5 flex justify-between items-center text-[9px] text-slate-400 border-t border-slate-200/60 pt-1">
+          <span>ID Sesi: <strong id="sheets-attempt-id" class="font-mono text-slate-600">-</strong></span>
+          <span>Mod: POST (no-cors)</span>
+        </div>
+      </div>
+
+      <!-- Butang Muat Turun Sijil (PNG & PDF) & Main Semula -->
+      <div class="mt-3.5 grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <button id="btn-dl-png" onclick="downloadCertificatePNG()" class="w-full py-2.5 sm:py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-[11px] sm:text-xs flex items-center justify-center space-x-1.5 transition active:scale-95 shadow-md shadow-emerald-600/20">
+          <i class="fa-solid fa-file-image"></i>
+          <span>SIMPAN PNG</span>
+        </button>
+        <button id="btn-dl-pdf" onclick="downloadCertificatePDF()" class="w-full py-2.5 sm:py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl text-[11px] sm:text-xs flex items-center justify-center space-x-1.5 transition active:scale-95 shadow-md shadow-indigo-600/20">
+          <i class="fa-solid fa-file-pdf"></i>
+          <span>MUAT TURUN PDF</span>
+        </button>
+        <button onclick="restartEntireGame()" class="w-full py-2.5 sm:py-3 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-extrabold rounded-2xl text-[11px] sm:text-xs flex items-center justify-center space-x-1.5 transition shadow-lg shadow-pink-500/25 active:scale-95">
+          <i class="fa-solid fa-rotate-right"></i>
+          <span>MAIN SEMULA</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL PENGURUSAN GURU (LENGKAP V1.1) ==================== -->
+  <div id="modal-teacher" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4 hidden overflow-y-auto">
+    <div class="bg-white rounded-3xl p-4 sm:p-6 max-w-2xl w-full shadow-2xl border-4 border-indigo-200 max-h-[92vh] flex flex-col my-auto">
+      <div class="flex items-center justify-between pb-2.5 border-b border-gray-100 shrink-0">
+        <div class="flex items-center space-x-2 text-indigo-700 font-extrabold text-sm sm:text-base">
+          <i class="fa-solid fa-chalkboard-user text-base sm:text-lg"></i>
+          <span class="truncate">Panel Kawalan & Pengesahan Guru</span>
+        </div>
+        <button onclick="toggleTeacherModal()" class="text-gray-400 hover:text-gray-700 w-8 h-8 rounded-full flex items-center justify-center active:scale-95">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Tab Kawalan Guru (Responsive Horizontal Scroll) -->
+      <div class="flex space-x-1.5 border-b border-gray-200 mt-2.5 pb-2 text-[10px] sm:text-xs font-bold overflow-x-auto shrink-0">
+        <button id="tab-btn-settings" onclick="switchTeacherTab('settings')" class="px-2.5 py-1.5 rounded-xl bg-indigo-600 text-white whitespace-nowrap">Tetapan Level</button>
+        <button id="tab-btn-questions" onclick="switchTeacherTab('questions')" class="px-2.5 py-1.5 rounded-xl bg-gray-100 text-gray-600 whitespace-nowrap">Bank 15 Soalan</button>
+        <button id="tab-btn-json" onclick="switchTeacherTab('json')" class="px-2.5 py-1.5 rounded-xl bg-gray-100 text-gray-600 whitespace-nowrap">Eksport / Import JSON</button>
+        <button id="tab-btn-records" onclick="switchTeacherTab('records')" class="px-2.5 py-1.5 rounded-xl bg-gray-100 text-gray-600 whitespace-nowrap">Pencapaian Murid</button>
+      </div>
+
+      <!-- KANDUNGAN TAB 1: TETAPAN TAHAP & MASA -->
+      <div id="teacher-tab-settings" class="space-y-3 overflow-y-auto pr-1 flex-1 py-2.5 text-xs">
+        <div class="bg-indigo-50/60 p-3 rounded-2xl border border-indigo-100 space-y-2">
+          <div class="font-extrabold text-indigo-900">Tetapan Syarat Lulus & Status Level:</div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <!-- Level 1 Config -->
+            <div class="bg-white p-2 rounded-xl border border-gray-200">
+              <div class="font-bold text-pink-600 flex items-center justify-between">
+                <span>Level 1 (Asas)</span>
+                <input type="checkbox" id="t-l1-active" checked class="rounded text-pink-600">
+              </div>
+              <label class="block text-[10px] text-gray-500 mt-1">Syarat Betul (min 5):</label>
+              <input type="number" id="t-l1-pass" min="1" max="5" value="3" class="w-full p-1 border rounded mt-0.5 text-xs font-bold">
+            </div>
+            <!-- Level 2 Config -->
+            <div class="bg-white p-2 rounded-xl border border-gray-200">
+              <div class="font-bold text-purple-600 flex items-center justify-between">
+                <span>Level 2 (Fakta)</span>
+                <input type="checkbox" id="t-l2-active" checked class="rounded text-purple-600">
+              </div>
+              <label class="block text-[10px] text-gray-500 mt-1">Syarat Betul (min 5):</label>
+              <input type="number" id="t-l2-pass" min="1" max="5" value="4" class="w-full p-1 border rounded mt-0.5 text-xs font-bold">
+            </div>
+            <!-- Level 3 Config -->
+            <div class="bg-white p-2 rounded-xl border border-gray-200">
+              <div class="font-bold text-amber-600 flex items-center justify-between">
+                <span>Level 3 (Master)</span>
+                <input type="checkbox" id="t-l3-active" checked class="rounded text-amber-600">
+              </div>
+              <label class="block text-[10px] text-gray-500 mt-1">Syarat Betul (min 5):</label>
+              <input type="number" id="t-l3-pass" min="1" max="5" value="4" class="w-full p-1 border rounded mt-0.5 text-xs font-bold">
+            </div>
+          </div>
+        </div>
+
+        <!-- Kawalan Pemasa Guru -->
+        <div class="bg-gray-50 p-3 rounded-2xl border border-gray-200 space-y-1.5">
+          <div class="font-extrabold text-gray-800">Kawalan Pemasa Permainan:</div>
+          <div class="flex items-center space-x-3 flex-wrap gap-y-1">
+            <label class="flex items-center space-x-1.5 text-xs cursor-pointer">
+              <input type="checkbox" id="t-timer-enabled" class="rounded text-indigo-600">
+              <span class="font-semibold text-gray-700">Aktifkan Had Masa</span>
+            </label>
+            <div class="flex items-center space-x-1">
+              <span class="text-gray-500">Minit:</span>
+              <input type="number" id="t-timer-limit" value="5" min="1" max="30" class="w-14 p-1 border rounded text-xs text-center font-bold">
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-amber-50 p-2.5 rounded-2xl border border-amber-200 text-amber-900 text-[11px] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+          <span>Status Bank Soalan: <strong>15 Soalan Berstatus Penuh</strong></span>
+          <button onclick="verifyAllQuestions()" class="w-full sm:w-auto px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold text-[10px] sm:text-xs">
+            <i class="fa-solid fa-signature mr-1"></i> Sahkan Semua Soalan
+          </button>
+        </div>
+      </div>
+
+      <!-- KANDUNGAN TAB 2: SENARAI 15 SOALAN BERPERINGKAT -->
+      <div id="teacher-tab-questions" class="space-y-2.5 overflow-y-auto pr-1 flex-1 py-2.5 text-xs hidden">
+        <div class="flex items-center justify-between mb-1.5 flex-wrap gap-1">
+          <div class="text-[10px] text-gray-500">Tapis tahap soalan:</div>
+          <div class="flex space-x-1">
+            <button onclick="filterTeacherQuestions(1)" class="px-2 py-0.5 rounded bg-pink-100 text-pink-700 font-bold text-[10px]">Level 1</button>
+            <button onclick="filterTeacherQuestions(2)" class="px-2 py-0.5 rounded bg-purple-100 text-purple-700 font-bold text-[10px]">Level 2</button>
+            <button onclick="filterTeacherQuestions(3)" class="px-2 py-0.5 rounded bg-amber-100 text-amber-700 font-bold text-[10px]">Level 3</button>
+            <button onclick="filterTeacherQuestions('all')" class="px-2 py-0.5 rounded bg-gray-200 text-gray-800 font-bold text-[10px]">Semua</button>
+          </div>
+        </div>
+        <div id="teacher-quiz-list" class="space-y-2.5">
+          <!-- Dijana secara dinamik -->
+        </div>
+      </div>
+
+      <!-- KANDUNGAN TAB 3: IMPORT & EKSPORT JSON -->
+      <div id="teacher-tab-json" class="space-y-2.5 overflow-y-auto pr-1 flex-1 py-2.5 text-xs hidden">
+        <div class="text-[10px] sm:text-[11px] text-gray-600">
+          Salin atau import JSON bank soalan 15 item:
+        </div>
+        <textarea id="json-io-area" rows="6" class="w-full p-2 font-mono text-[9px] sm:text-[10px] border border-gray-300 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-2 pt-1">
+          <button onclick="exportQuizBankJSON()" class="w-full sm:w-auto px-3 py-2 bg-gray-800 hover:bg-black text-white font-bold rounded-xl text-xs flex items-center justify-center space-x-1">
+            <i class="fa-solid fa-download"></i>
+            <span>Salin / Muat Turun JSON</span>
+          </button>
+          <button onclick="importQuizBankJSON()" class="w-full sm:w-auto px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs flex items-center justify-center space-x-1">
+            <i class="fa-solid fa-upload"></i>
+            <span>Import JSON</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- KANDUNGAN TAB 4: REKOD PENCAPAIAN PELAJAR -->
+      <div id="teacher-tab-records" class="space-y-2.5 overflow-y-auto pr-1 flex-1 py-2.5 text-xs hidden">
+        <div class="font-extrabold text-gray-700">Senarai Sesi Percubaan Semasa:</div>
+        <div id="student-records-table" class="bg-gray-50 rounded-2xl p-2.5 border border-gray-200">
+          <!-- Rekod pemain -->
+        </div>
+      </div>
+
+      <!-- Butang Simpan Modal Guru -->
+      <div class="mt-2.5 pt-2 border-t border-gray-100 flex justify-between items-center shrink-0">
+        <span id="teacher-save-indicator" class="text-[10px] sm:text-[11px] text-emerald-600 font-bold hidden"><i class="fa-solid fa-check mr-1"></i> Disimpan!</span>
+        <div class="flex space-x-2 ml-auto">
+          <button onclick="saveTeacherEdits()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition active:scale-95">
+            Simpan Tetapan
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== LOGIK UTAMA PERMAINAN (THREE.JS + GAMEPLAY V1.1) ==================== -->
+  <script>
+    /* =========================================================
+       1. DATA BANK 15 SOALAN SASTERA KMK MENGIKUT LEVEL (DIBANGUNKAN DARI TEKS ASAL)
+       (Level 1: Asas, Level 2: Fakta & Peristiwa, Level 3: Analisis & Amanat)
+       Karya: Seru, Menarah Gunung, Kecundang Seorang Petani, Ku Biarkan Angin Berlalu
+       ========================================================= */
+    let quizBank = [
+      // ---------- LEVEL 1: ASAS (5 SOALAN) ----------
+      {
+        id: 1,
+        cerpen: "Seru",
+        konstruk: "Watak & Latar Budaya",
+        level: 1,
+        soalan: "Siapakah watak utama yang menjadi pembaca seru dan jampi dalam kalangan masyarakat Salako di Kampung Sebiris?",
+        pilihan: [
+          "A. Dak Joh (Johan)",
+          "B. Cikgu Peter",
+          "C. Pangarah Huma",
+          "D. Tauke Cina Lundu"
+        ],
+        jawapan: 0,
+        penerangan: "Dak Joh (Johan) merupakan watak utama berbangsa Salako di Kampung Sebiris yang mewarisi kepakaran jampi, serapah, dan upacara adat daripada bapa dan datuknya.",
+        statusPengesahan: "Disahkan Guru",
+        aktif: true
+      },
+      {
+        id: 2,
+        cerpen: "Menarah Gunung",
+        konstruk: "Latar Tempat & Legenda",
+        level: 1,
+        soalan: "Mengapakah gunung di Pulau Sumpahan dinamakan sebagai Gunung Catraya?",
+        pilihan: [
+          "A. Mengambil sempena nama sejenis burung helang putih yang mendiami puncak pulau",
+          "B. Mengambil sempena nama seekor ular besar legenda yang pernah menjadi penunggu gunung tersebut",
+          "C. Dinamakan sempena nama raja pertama yang membuka penempatan di pulau berkenaan",
+          "D. Mengambil sempena nama bahasa purba yang bermaksud 'puncak permata'"
+        ],
+        jawapan: 1,
+        penerangan: "Gunung Catraya mendapat nama daripada legenda seekor ular besar bernama Catraya sebesar batang kelapa dan sepuluh depa panjang yang akhirnya dipercayai mati dan bertukar menjadi batu di puncak gunung.",
+        statusPengesahan: "Disahkan Guru",
+        aktif: true
+      },
+      {
+        id: 3,
+        cerpen: "Kecundang Seorang Petani",
+        konstruk: "Watak & Latar Situasi",
+        level: 1,
+        soalan: "Apakah punca utama ratusan ekar sawah Matlawi dan penduduk kampungnya menjadi rang dan kering kontang?",
+        pilihan: [
+          "A. Kemarau berpanjangan selama sepuluh tahun tanpa sebarang hujan",
+          "B. Projek pembinaan tali air yang gagal berfungsi menaikkan air ke sawah bendang",
+          "C. Serangan makhluk perosak seperti tikus dan ulat daun yang meluas",
+          "D. Keengganan anak-anak muda membantu mengerjakan sawah padi"
+        ],
+        jawapan: 1,
+        penerangan: "Tali air yang dikorek tiga tahun lalu langsung tidak dapat digunakan untuk menaikkan air ke sawah, malah mengeringkan air sedia ada sehingga sawah penduduk rosak dan terbengkalai.",
+        statusPengesahan: "Disahkan Guru",
+        aktif: true
+      },
+      {
+        id: 4,
+        cerpen: "Ku Biarkan Angin Berlalu",
+        konstruk: "Tema & Watak Protagonis",
+        level: 1,
+        soalan: "Bagaimanakah fitrah tiupan angin biasa memberi kesan rohani kepada watak 'Aku' pada permulaan cerpen?",
+        pilihan: [
+          "A. Mendorong watak berhijrah merantau ke negeri orang",
+          "B. Menggerakkan jiwa watak mengingati dan merindui keagungan Allah SWT Yang Maha Pencipta",
+          "C. Menimbulkan rasa takut akan bencana ribut taufan laut dalam",
+          "D. Mengingatkan watak kepada kenangan manis bersama kekasih masa silam"
+        ],
+        jawapan: 1,
+        penerangan: "Belaian pawana yang berpuput lembut meresapi tubuh watak 'Aku' menjadi proses taqarub yang mengingatkan dan merindukannya kepada Allah Yang Maha Pemurah lagi Maha Mengasihani.",
+        statusPengesahan: "Disahkan Guru",
+        aktif: true
+      },
+      {
+        id: 5,
+        cerpen: "Kecundang Seorang Petani",
+        konstruk: "Watak & Keluarga",
+        level: 1,
+        soalan: "Di manakah tempat isteri Matlawi, iaitu Jebah, bekerja mencari rezeki sampingan?",
+        pilihan: [
+          "A. Kilang memproses minyak kelapa",
+          "B. Restoran makanan laut di kuala sungai",
+          "C. Ladang sayur-sayuran separa moden",
+          "D. Kedai runcit di pekan berhampiran"
+        ],
+        jawapan: 0,
+        penerangan: "Jebah yang sedang mengandung enam bulan bekerja mengikut syif di kilang memproses minyak kelapa yang terletak kira-kira satu batu dari rumah mereka.",
+        statusPengesahan: "Disahkan Guru",
+        aktif: true
+      },
+
+      // ---------- LEVEL 2: SEDERHANA / PEMBURU FAKTA (5 SOALAN) ----------
+      {
+        id: 6,
+        cerpen: "Seru",
+        konstruk: "Fakta Adat & Peristiwa",
+        level: 2,
+        soalan: "Apakah nama upacara adat yang dijalankan oleh masyarakat Salako sebelum menuai padi bagi memulihkan semangat kampung?",
+        pilihan: [
+          "A. Upacara buis darat",
+          "B. Upacara narank",
+          "C. Upacara memutus ubat",
+          "D. Upacara menyembelih ayam jantan putih"
+        ],
+        jawapan: 1,
+        penerangan: "Sebelum menuai padi atau gawai padi, Dak Joh mencadangkan mereka mengadakan upacara 'narank' yang disusuli pantang selama tiga hari tiga malam agar kampung kembali bersih daripada gangguan hantu dan mara bahaya.",
+        statusPengesahan: "Disahkan Guru",
+        aktif: true
+      },
+      {
+        id: 7,
+        cerpen: "Menarah Gunung",
+        konstruk: "Hubungan Peristiwa & Konflik",
+        level: 2,
+        soalan: "Apakah kesan buruk tindakan jentera buldozer menarah Gunung Catraya terhadap kehidupan para pesawah di kaki gunung?",
+        pilihan: [
+          "A. Sungai di kaki gunung menjadi kering kontang sehingga kekurangan bekalan ikan",
+          "B. Hujan lebat membawa limpahan lumpur dari puncak gunung yang menimbus ribuan hektar sawah padi",
+          "C. Peningkatan kadar cukai pintu yang dikenakan oleh pihak berkuasa tempatan",
+          "D. Kemusnahan keseluruhan rumah kediaman petani akibat gegaran jentera berat"
+        ],
+        jawapan: 1,
+        penerangan: "Tindakan menarah lurah antara dua puncak gunung menyebabkan lumpur kuning mengalir menimbus ribuan hektar tanah sawah petani setiap kali hujan turun, menghalang mereka daripada bertanam padi.",
+        statusPengesahan: "Disahkan Guru",
+        aktif: true
+      },
+      {
+        id: 8,
+        cerpen: "Kecundang Seorang Petani",
+        konstruk: "Peristiwa & Tindakan Watak",
+        level: 2,
+        soalan: "Apakah tindakan Matlawi yang didorong oleh rasa marah dan dendam terhadap kegagalan projek tali air?",
+        pilihan: [
+          "A. Mengupah peguam untuk mendakwa jurutera dan arkitek projek ke mahkamah",
+          "B. Mengasah mata cangkul untuk meruntuhkan dan menimbus parit tali air dengan selut batas",
+          "C. Membakar rumah pam dan cerobong kilang kelapa sawit yang berhampiran",
+          "D. Menjual sawah pusakanya kepada tauke dari ibu kota mengikut jejak Jusuh dan Chin"
+        ],
+        jawapan: 1,
+        penerangan: "Matlawi yang berasa sawah pusakanya dicabul nekad mencangkul batas tali air dan menghumban tanah selut ke dalam parit demi menimbus parit tersebut walau dalam keadaan demam dan hujan lebat.",
+        statusPengesahan: "Disahkan Guru",
+        aktif: true
+      },
+      {
+        id: 9,
+        cerpen: "Ku Biarkan Angin Berlalu",
+        konstruk: "Fakta Simbolik & Propaganda",
+        level: 2,
+        soalan: "Mengapakah watak 'Aku' menolak dan menjerkah angin kencang yang melanda tubuhnya dalam bahagian kedua cerpen?",
+        pilihan: [
+          "A. Kerana tiupan angin membawa habuk kilang kimia yang mencemarkan alam",
+          "B. Kerana angin tersebut dijadikan alat membawa jeritan slogan politik murahan dan pemujaan pemimpin berkuasa",
+          "C. Kerana angin itu merobohkan rumah kediamannya di tepi pantai",
+          "D. Kerana watak 'Aku' mengalami trauma masa kecil terhadap bunyi guruh dan kilat"
+        ],
+        jawapan: 1,
+        penerangan: "Watak 'Aku' marah dan menjerkah 'Biadap lu!' kerana angin bukan lagi membawa peringatan keagungan Tuhan, tetapi telah diperkudakan oleh para pengampu dan samseng politik untuk melaungkan propaganda bahawa pemimpin berkuasalah yang memberi segala rezeki.",
+        statusPengesahan: "Disahkan Guru",
+        aktif: true
+      },
+      {
+        id: 10,
+        cerpen: "Seru",
+        konstruk: "Peristiwa Konflik Hubungan",
+        level: 2,
+        soalan: "Mengapakah hubungan persaudaraan antara Dak Joh (Johan) dengan adiknya Jaong (Basuni) terputus sebelum ini?",
+        pilihan: [
+          "A. Pertikaian merebut harta pusaka dusun durian di kaki Gunung Poe",
+          "B. Perselisihan faham mengenai perkahwinan Jaong dengan Aminah di Siruk",
+          "C. Keengganan Jaong mematuhi pantang larang gawai huma",
+          "D. Tindakan Jaong menyertai pembalak menebang hutan di belakang kampung"
+        ],
+        jawapan: 1,
+        penerangan: "Johan memutuskan pertalian darah dengan adiknya Basuni (Jaong) semata-mata kerana tidak merestui perkahwinan Jaong dengan Aminah di Siruk.",
+        statusPengesahan: "Disahkan Guru",
+        aktif: true
+      },
+
+      // ---------- LEVEL 3: MENCABAR / MASTER SASTERA (5 SOALAN) ----------
+      {
+        id: 11,
+        cerpen: "Kecundang Seorang Petani",
+        konstruk: "Analisis Tragedi & Pengakhiran",
+        level: 3,
+        soalan: "Bagaimanakah klimaks tragis yang membawa kepada kematian Matlawi di batas tali air?",
+        pilihan: [
+          "A. Dipatuk ular lidi berbisa yang bersembunyi di celah rumput temucut",
+          "B. Tergelincir di atas selut licin menyebabkan mata cangkul yang terpelanting terbenam ke dahinya lalu lemas dalam air keruh parit",
+          "C. Dilanggar oleh jentera buldozer yang meratakan tapak industri di perenggan tanah",
+          "D. Mengalami serangan jantung ketika bertengkar mulut dengan isterinya Jebah di kepala bendul"
+        ],
+        jawapan: 1,
+        penerangan: "Ketika mencangkul dalam hujan lebat dengan badan demam, Matlawi tergelincir di atas selut licin; mata cangkul yang baru diasah terbenam sedalam dua tiga inci ke dahinya sebelum dia terguling dan terlemas di dalam parit berair keruh sambil melafazkan kalimah syahadah.",
+        statusPengesahan: "Disahkan Guru",
+        aktif: true
+      },
+      {
+        id: 12,
+        cerpen: "Seru",
+        konstruk: "Analisis Falsafah & Pengakhiran Watak",
+        level: 3,
+        soalan: "Apakah peristiwa simbolik pada saat-saat akhir nyawa Dak Joh sebelum tertimbus runtuhan tanah di lereng Gunung Gading?",
+        pilihan: [
+          "A. Dia melarikan diri meninggalkan penduduk kampung bersama anack buluh hijau",
+          "B. Dia sempat memegang tangan adiknya Basuni (Jaong) sambil melafazkan kalimah tauhid (syahadah)",
+          "C. Dia melepaskan tujuh ekor ayam jantan untuk menghalau hantu penunggu",
+          "D. Dia menyerahkan buku catatannya kepada Cikgu Peter untuk diterbitkan"
+        ],
+        jawapan: 1,
+        penerangan: "Sebelum ditimbus runtuhan tanah lereng gunung, Dak Joh memegang tangan Basuni, mengakui persaudaraan mereka, dan menyambut bimbingan syahadah adiknya: 'Asyhadu an lailahaillallah, wa asyhadu anna Muhammadarrasulullah'.",
+        statusPengesahan: "Disahkan Guru",
+        aktif: true
+      },
+      {
+        id: 13,
+        cerpen: "Menarah Gunung",
+        konstruk: "Kritikan Sosial & Sosioekonomi",
+        level: 3,
+        soalan: "Apakah kritikan sosial pengarang terhadap nasib penduduk peribumi Pulau Sumpahan di sebalik kepesatan pembangunan pelancongan?",
+        pilihan: [
+          "A. Penduduk kampung terpinggir menjadi golongan minoriti dan buruh kasar bawahan kerana kemahiran mereka tidak sepadan dengan arus kemodenan",
+          "B. Penduduk kampung membolot semua jawatan eksekutif dalam Lembaga Pembangunan Pulau Sumpahan",
+          "C. Seluruh penduduk pulau menjadi kaya raya hasil pemilikan saham hotel bertaraf lima bintang",
+          "D. Orang luar dihalang sama sekali daripada membeli hartanah dan mendirikan perniagaan di pulau tersebut"
+        ],
+        jawapan: 0,
+        penerangan: "Pengarang mengkritik jurang pembangunan: orang asal pulau menjadi kaum minoriti, kehilangan tanah pusaka akibat godaan wang pampasan seketika, dan akhirnya terpaksa menjadi pak guard, tukang kebun, pemandu, atau tukang sapu.",
+        statusPengesahan: "Disahkan Guru",
+        aktif: true
+      },
+      {
+        id: 14,
+        cerpen: "Ku Biarkan Angin Berlalu",
+        konstruk: "Analisis Simbolisme Siasah & Nafsu",
+        level: 3,
+        soalan: "Apakah maksud istilah 'manusia jenis bahimiyyah' dan 'siasah ala karikatur' yang dikritik hebat oleh pengarang?",
+        pilihan: [
+          "A. Golongan yang mementingkan sains moden mengatasi adat warisan nenek moyang",
+          "B. Manusia bertaraf kehaiwanan yang dikuasai hawa nafsu kerakusan kuasa, rasuah, dan kepura-puraan politik yang nilainya tidak lebih dari sebelah sayap nyamuk",
+          "C. Kaum nelayan yang terpaksa berhadapan dengan keganasan ombak taufan di laut",
+          "D. Para seniman yang mengabaikan tanggungjawab sosial masyarakat"
+        ],
+        jawapan: 1,
+        penerangan: "'Bahimiyyah' (sifat kehaiwanan/hawa nafsu buas) merujuk kepada pemimpin dan manusia yang tenggelam dalam rasuah, penipuan, janji palsu, serta siasah duniawi penuh propaganda kotor yang di sisi Allah tidak berharga walau sebelah sayap nyamuk.",
+        statusPengesahan: "Disahkan Guru",
+        aktif: true
+      },
+      {
+        id: 15,
+        cerpen: "Gabungan Karya KMK",
+        konstruk: "Sintesis Persoalan & Nilai Maruah",
+        level: 3,
+        soalan: "Berdasarkan cerpen 'Seru', 'Menarah Gunung', dan 'Kecundang Seorang Petani', apakah persamaan konflik fizikal yang dihadapi oleh watak marhaen?",
+        pilihan: [
+          "A. Kehilangan tanah, kemusnahan sawah dan alam sekitar akibat kerakusan pihak berkepentingan atas nama pembangunan dan keuntungan",
+          "B. Ancaman serangan lanun laut yang merompak hasil tanaman",
+          "C. Persengketaan etnik yang memusnahkan rumah ibadat",
+          "D. Kegagalan sistem persekolahan menyediakan peluang pendidikan asas"
+        ],
+        jawapan: 0,
+        penerangan: "Ketiga-tiga karya memaparkan tragedi masyarakat bawahan (Dak Joh, petani kaki gunung, Matlawi) yang tanah pusaka dan sumber rezeki mereka musnah akibat pembalakan, pencerobohan gunung untuk peranginan, serta perancangan tali air yang cacat demi kepentingan industri.",
+        statusPengesahan: "Disahkan Guru",
+        aktif: true
+      }
+    ];
+
+    /* =========================================================
+       2. STATUS PERMAINAN BERPERINGKAT (STATE SYSTEM)
+       ========================================================= */
+    const GOOGLE_SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxycidClA9JHpYS6gznx5J9CiEK505A1GBzjSxwEbhUJI3vda3Uye41aFhVKTUJr7QK/exec";
+
+    function generateUniqueAttemptId() {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      let rand = "";
+      for (let i = 0; i < 5; i++) {
+        rand += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return `KMK-${rand}-${Date.now().toString().slice(-4)}`;
+    }
+
+    const gameState = {
+      attemptId: generateUniqueAttemptId(),
+      sheetsSubmission: {
+        isSubmitting: false,
+        attempted: false,
+        error: null
+      },
+      playerName: "Ahmad Faris",
+      playerClass: "5 Gemilang",
+      currentLevel: 1, // Level 1, 2, atau 3
+      isGameRunning: false,
+      startTime: 0,
+      elapsedSeconds: 0,
+      timerInterval: null,
+      activeInteractItem: null,
+
+      // Status Integrasi Google Sheets
+      sheetsSubmission: {
+        isSubmitting: false,
+        submitted: false,
+        error: false
+      },
+
+      // Tetapan Guru (Configurable via Teacher Panel)
+      config: {
+        l1Active: true,
+        l1PassThreshold: 3, // min 3/5
+        l2Active: true,
+        l2PassThreshold: 4, // min 4/5
+        l3Active: true,
+        l3PassThreshold: 4, // min 4/5
+        timerEnabled: false,
+        timerMinutes: 5
+      },
+
+      // Markah & Statistik Mengikut Level
+      levelData: {
+        1: { correctCount: 0, answeredCount: 0, questionScore: 0, bonus: 0, completed: false, badge: "Penjelajah Ilmu" },
+        2: { correctCount: 0, answeredCount: 0, questionScore: 0, bonus: 0, completed: false, badge: "Pemburu Fakta" },
+        3: { correctCount: 0, answeredCount: 0, questionScore: 0, bonus: 0, completed: false, badge: "Master Sastera" }
+      },
+
+      // Jumlah Skor Keseluruhan
+      totalScore: 0,
+
+      // Item 3D dalam persekitaran semasa
+      currentLevelItems: [],
+      levelPassedRecord: { 1: false, 2: false, 3: false }
+    };
+
+    /* =========================================================
+       3. SISTEM AUDIO SINTESIS (WEB AUDIO API - ZERO ASSETS)
+       Menyediakan kesan bunyi interaksi, kutipan, jawapan, & kemenangan.
+       ========================================================= */
+    const audioSynth = {
+      ctx: null,
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) this.ctx = new AudioContext();
+        }
+      },
+      playTone(freq, type = 'sine', duration = 0.15, vol = 0.2) {
+        try {
+          this.init();
+          if (!this.ctx) return;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+          gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + duration);
+        } catch(e) {}
+      },
+      playCollect() {
+        this.playTone(523.25, 'triangle', 0.1, 0.25); // C5
+        setTimeout(() => this.playTone(659.25, 'triangle', 0.1, 0.25), 100); // E5
+        setTimeout(() => this.playTone(783.99, 'triangle', 0.2, 0.25), 200); // G5
+      },
+      playCorrect() {
+        this.playTone(587.33, 'sine', 0.12, 0.3); // D5
+        setTimeout(() => this.playTone(880.00, 'sine', 0.25, 0.3), 120); // A5
+      },
+      playWrong() {
+        this.playTone(260, 'sawtooth', 0.2, 0.25);
+        setTimeout(() => this.playTone(200, 'sawtooth', 0.3, 0.25), 180);
+      },
+      playLevelComplete() {
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, idx) => {
+          setTimeout(() => this.playTone(freq, 'triangle', 0.25, 0.3), idx * 150);
+        });
+      },
+      playDecoy() {
+        this.playTone(180, 'square', 0.15, 0.2);
+      }
+    };
+
+    /* =========================================================
+       4. PERSEKITARAN THREE.JS & PAPARAN 3 TAHAP
+       Warna pasar raya & suasana bertukar secara dinamik:
+       Level 1: Hijau Pudina & Merah Jambu
+       Level 2: Jingga & Ungu
+       Level 3: Emas & Ungu Gelap
+       ========================================================= */
+    let scene, camera, renderer, clock;
+    let playerGroup, playerBody, headMesh, leftLeg, rightLeg, leftArm, rightArm;
+    let interactiveItemMeshes = [];
+    let colliders = [];
+    let floorMesh, floorMat, wallMeshes = [];
+    let levelSignSprite = null;
+    let masterAltarMesh = null; // Kaunter khas Level 3
+
+    // Kawalan Input
+    const keysPressed = {};
+    const joystickState = { active: false, x: 0, y: 0 };
+
+    // Palet Warna Mengikut Level
+    const LEVEL_PALETTES = {
+      1: {
+        name: "Jelajah Pasar Raya Ilmu",
+        floor: 0xf0fdf4, // Pudina lembut
+        floorLine: '#bbf7d0',
+        walls: 0xfce7f3, // Merah jambu lembut
+        fog: 0xfdf2f8,
+        ambient: 0xffffff,
+        hudClass: "bg-pink-100 text-pink-700",
+        hudAvatar: "bg-pink-500",
+        levelSignBg: "#ec4899",
+        levelSignFg: "#ffffff"
+      },
+      2: {
+        name: "Misi Pemburu Fakta",
+        floor: 0xfaf5ff, // Ungu lavender muda
+        floorLine: '#e9d5ff',
+        walls: 0xffedd5, // Jingga pastel lembut
+        fog: 0xf5f3ff,
+        ambient: 0xffedd5,
+        hudClass: "bg-purple-100 text-purple-700",
+        hudAvatar: "bg-purple-600",
+        levelSignBg: "#9333ea",
+        levelSignFg: "#ffffff"
+      },
+      3: {
+        name: "Cabaran Master Sastera",
+        floor: 0x2e1065, // Ungu gelap diraja
+        floorLine: '#fbbf24',
+        walls: 0x4c1d95, // Ungu mendalam
+        fog: 0x1e1b4b,
+        ambient: 0xfef08a, // Cahaya keemasan
+        hudClass: "bg-amber-100 text-amber-900",
+        hudAvatar: "bg-amber-500",
+        levelSignBg: "#b45309",
+        levelSignFg: "#fef3c7"
+      }
+    };
+
+    function initThree() {
+      const canvas = document.getElementById('game-canvas');
+      clock = new THREE.Clock();
+
+      // Scene
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(LEVEL_PALETTES[1].fog);
+      scene.fog = new THREE.FogExp2(LEVEL_PALETTES[1].fog, 0.025);
+
+      // Camera: Responsive FOV adjustment based on screen aspect ratio
+      const initialAspect = window.innerWidth / window.innerHeight;
+      const initialFov = initialAspect < 1 ? 65 : 55; // Widen FOV in portrait mode
+      camera = new THREE.PerspectiveCamera(initialFov, initialAspect, 0.1, 100);
+      camera.position.set(0, 10, 14);
+
+      // Renderer: Cap pixel ratio to 1.75 for smooth performance on budget phones
+      renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, powerPreference: 'high-performance' });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+      // Pencahayaan
+      const hemiLight = new THREE.HemisphereLight(0xffffff, 0xfce7f3, 0.85);
+      hemiLight.name = "hemiLight";
+      hemiLight.position.set(0, 20, 0);
+      scene.add(hemiLight);
+
+      const dirLight = new THREE.DirectionalLight(0xfff5ea, 0.9);
+      dirLight.position.set(12, 18, 10);
+      dirLight.castShadow = true;
+      dirLight.shadow.mapSize.width = 1024;
+      dirLight.shadow.mapSize.height = 1024;
+      scene.add(dirLight);
+
+      // Bina Pasar Raya & Watak
+      buildSupermarketEnvironment();
+      buildCuteCharacter();
+
+      // Bina Papan Tanda 3D Level
+      updateLevelVisualTheme(1);
+
+      // Jana 5 Item Pembelajaran Level 1
+      spawnLevelItems(1);
+
+      // Pasang Event Listeners
+      setupInputListeners();
+      setupJoystick();
+
+      window.addEventListener('resize', onWindowResize);
+      window.addEventListener('orientationchange', () => setTimeout(onWindowResize, 200));
+    }
+
+    function buildSupermarketEnvironment() {
+      const roomWidth = 26;
+      const roomDepth = 22;
+      const wallHeight = 4.5;
+
+      // Lantai Berjubin
+      const floorGeo = new THREE.PlaneGeometry(roomWidth, roomDepth, 26, 22);
+      floorMat = new THREE.MeshStandardMaterial({
+        color: LEVEL_PALETTES[1].floor,
+        roughness: 0.6,
+        metalness: 0.05
+      });
+      floorMesh = new THREE.Mesh(floorGeo, floorMat);
+      floorMesh.rotation.x = -Math.PI / 2;
+      floorMesh.receiveShadow = true;
+      scene.add(floorMesh);
+
+      // Bahan Dinding
+      const wallMat = new THREE.MeshStandardMaterial({ color: LEVEL_PALETTES[1].walls, roughness: 0.8 });
+
+      function createWall(w, h, d, x, y, z) {
+        const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
+        wall.position.set(x, y, z);
+        wall.receiveShadow = true;
+        scene.add(wall);
+        wallMeshes.push(wall);
+        colliders.push({ minX: x - w/2, maxX: x + w/2, minZ: z - d/2, maxZ: z + d/2 });
+      }
+
+      // 4 Sempadan Dinding
+      createWall(roomWidth, wallHeight, 0.8, 0, wallHeight/2, -roomDepth/2); // Utara
+      createWall(0.8, wallHeight, roomDepth, -roomWidth/2, wallHeight/2, 0); // Barat
+      createWall(0.8, wallHeight, roomDepth, roomWidth/2, wallHeight/2, 0);  // Timur
+      createWall(9, wallHeight, 0.8, -roomWidth/4 - 1.5, wallHeight/2, roomDepth/2); // Selatan Kiri
+      createWall(9, wallHeight, 0.8, roomWidth/4 + 1.5, wallHeight/2, roomDepth/2);  // Selatan Kanan
+
+      // Pintu Kaca
+      const glassMat = new THREE.MeshPhysicalMaterial({
+        color: 0x93c5fd,
+        transparent: true,
+        opacity: 0.35,
+        roughness: 0.1,
+        transmission: 0.7
+      });
+      const doorMesh = new THREE.Mesh(new THREE.BoxGeometry(4.8, wallHeight * 0.8, 0.2), glassMat);
+      doorMesh.position.set(0, (wallHeight * 0.8)/2, roomDepth/2);
+      scene.add(doorMesh);
+
+      // Kaunter Pembayaran Utama
+      buildCheckoutCounter(6, roomDepth/2 - 5);
+
+      // 4 Rak Cerpen Sastera KMK dengan Label Jelas
+      buildThematicShelf(-8, -2, 0xfbcfe8, "SERU", "Cerpen 1");
+      buildThematicShelf(-3, -2, 0xa7f3d0, "MENARAH GUNUNG", "Cerpen 2");
+      buildThematicShelf(3, -2, 0xc4b5fd, "KECUNDANG SEORANG PETANI", "Cerpen 3");
+      buildThematicShelf(8, -2, 0xfed7aa, "KU BIARKAN ANGIN BERLALU", "Cerpen 4");
+
+      // Lampu Siling Hiasan
+      for (let x = -8; x <= 8; x += 8) {
+        for (let z = -6; z <= 6; z += 6) {
+          const lightGeo = new THREE.BoxGeometry(2, 0.1, 1);
+          const lightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+          const lightMesh = new THREE.Mesh(lightGeo, lightMat);
+          lightMesh.position.set(x, 4.4, z);
+          scene.add(lightMesh);
+        }
+      }
+    }
+
+    function buildCheckoutCounter(x, z) {
+      const counterGroup = new THREE.Group();
+      const deskMat = new THREE.MeshStandardMaterial({ color: 0xfef08a, roughness: 0.5 });
+      const desk = new THREE.Mesh(new THREE.BoxGeometry(4.5, 1.4, 2), deskMat);
+      desk.position.set(0, 0.7, 0);
+      desk.castShadow = true;
+      desk.receiveShadow = true;
+      counterGroup.add(desk);
+
+      const regMat = new THREE.MeshStandardMaterial({ color: 0x475569 });
+      const reg = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.6, 0.7), regMat);
+      reg.position.set(-1, 1.6, 0);
+      counterGroup.add(reg);
+
+      const signMesh = createTextSprite("KAUNTER EDUMART", "#d97706", "#fef3c7");
+      signMesh.position.set(0, 2.5, 0);
+      counterGroup.add(signMesh);
+
+      counterGroup.position.set(x, 0, z);
+      scene.add(counterGroup);
+
+      colliders.push({ minX: x - 2.5, maxX: x + 2.5, minZ: z - 1.2, maxZ: z + 1.2 });
+    }
+
+    function buildThematicShelf(x, z, colorHex, title, subtitle) {
+      const shelfGroup = new THREE.Group();
+      const shelfWidth = 2.4;
+      const shelfHeight = 2.8;
+      const shelfDepth = 9;
+
+      const shelfMat = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.6 });
+      const baseMesh = new THREE.Mesh(new THREE.BoxGeometry(shelfWidth, shelfHeight, shelfDepth), shelfMat);
+      baseMesh.position.set(0, shelfHeight / 2, 0);
+      baseMesh.castShadow = true;
+      baseMesh.receiveShadow = true;
+      shelfGroup.add(baseMesh);
+
+      // Buku-buku di atas rak
+      for (let rz = -shelfDepth/2 + 1; rz <= shelfDepth/2 - 1; rz += 1.8) {
+        for (let level = 0.8; level <= 2.2; level += 0.8) {
+          const bookMat = new THREE.MeshStandardMaterial({
+            color: Math.random() > 0.5 ? 0xffffff : 0xec4899,
+            roughness: 0.4
+          });
+          const bookRow = new THREE.Mesh(new THREE.BoxGeometry(shelfWidth + 0.1, 0.4, 0.9), bookMat);
+          bookRow.position.set(0, level, rz);
+          shelfGroup.add(bookRow);
+        }
+      }
+
+      // Label 3D Terapung
+      const labelSprite = createTextSprite(title, "#831843", "#ffffff");
+      labelSprite.position.set(0, shelfHeight + 1.1, 0);
+      labelSprite.scale.set(4, 1.2, 1);
+      shelfGroup.add(labelSprite);
+
+      const poleGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.8);
+      const poleMat = new THREE.MeshBasicMaterial({ color: 0x9ca3af });
+      const pole = new THREE.Mesh(poleGeo, poleMat);
+      pole.position.set(0, shelfHeight + 0.4, 0);
+      shelfGroup.add(pole);
+
+      shelfGroup.position.set(x, 0, z);
+      scene.add(shelfGroup);
+
+      colliders.push({
+        minX: x - shelfWidth/2 - 0.4,
+        maxX: x + shelfWidth/2 + 0.4,
+        minZ: z - shelfDepth/2 - 0.4,
+        maxZ: z + shelfDepth/2 + 0.4
+      });
+    }
+
+    function createTextSprite(text, textColor = '#1f2937', bgColor = '#ffffff') {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 160;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = bgColor;
+      ctx.roundRect(16, 16, 480, 128, [36]);
+      ctx.fill();
+
+      ctx.lineWidth = 8;
+      ctx.strokeStyle = textColor;
+      ctx.roundRect(16, 16, 480, 128, [36]);
+      ctx.stroke();
+
+      ctx.fillStyle = textColor;
+      ctx.font = 'bold 34px "Plus Jakarta Sans", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, 256, 80);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.minFilter = THREE.LinearFilter;
+      const spriteMat = new THREE.SpriteMaterial({ map: texture, depthTest: false, depthWrite: false });
+      const sprite = new THREE.Sprite(spriteMat);
+      sprite.scale.set(3.4, 1.05, 1);
+      return sprite;
+    }
+
+    // Watak Pemain Comel (Chibi Pink)
+    function buildCuteCharacter() {
+      playerGroup = new THREE.Group();
+
+      const skinMat = new THREE.MeshStandardMaterial({ color: 0xffdfd3, roughness: 0.6 });
+      const clothMat = new THREE.MeshStandardMaterial({ color: 0xf472b6, roughness: 0.5 });
+      const darkMat = new THREE.MeshBasicMaterial({ color: 0x1f2937 });
+      const blushMat = new THREE.MeshBasicMaterial({ color: 0xfb7185 });
+
+      // Badan
+      const bodyGeo = new THREE.CylinderGeometry(0.4, 0.5, 0.8, 16);
+      playerBody = new THREE.Mesh(bodyGeo, clothMat);
+      playerBody.position.y = 0.85;
+      playerBody.castShadow = true;
+      playerGroup.add(playerBody);
+
+      // Kepala Chibi
+      const headGeo = new THREE.SphereGeometry(0.55, 32, 32);
+      headMesh = new THREE.Mesh(headGeo, skinMat);
+      headMesh.position.y = 1.6;
+      headMesh.castShadow = true;
+      playerGroup.add(headMesh);
+
+      // Topi Beret
+      const hatGeo = new THREE.SphereGeometry(0.58, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.45);
+      const hatMesh = new THREE.Mesh(hatGeo, clothMat);
+      hatMesh.rotation.x = -0.2;
+      hatMesh.position.set(0, 1.7, -0.05);
+      playerGroup.add(hatMesh);
+
+      // Mata
+      const eyeGeo = new THREE.SphereGeometry(0.08, 16, 16);
+      const leftEye = new THREE.Mesh(eyeGeo, darkMat);
+      leftEye.position.set(-0.2, 1.62, 0.48);
+      const rightEye = new THREE.Mesh(eyeGeo, darkMat);
+      rightEye.position.set(0.2, 1.62, 0.48);
+      playerGroup.add(leftEye);
+      playerGroup.add(rightEye);
+
+      // Pipi
+      const blushGeo = new THREE.SphereGeometry(0.07, 12, 12);
+      const leftBlush = new THREE.Mesh(blushGeo, blushMat);
+      leftBlush.position.set(-0.32, 1.52, 0.42);
+      const rightBlush = new THREE.Mesh(blushGeo, blushMat);
+      rightBlush.position.set(0.32, 1.52, 0.42);
+      playerGroup.add(leftBlush);
+      playerGroup.add(rightBlush);
+
+      // Kaki
+      const legGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.45, 12);
+      const legMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6 });
+      leftLeg = new THREE.Mesh(legGeo, legMat);
+      leftLeg.position.set(-0.2, 0.25, 0);
+      leftLeg.castShadow = true;
+      playerGroup.add(leftLeg);
+
+      rightLeg = new THREE.Mesh(legGeo, legMat);
+      rightLeg.position.set(0.2, 0.25, 0);
+      rightLeg.castShadow = true;
+      playerGroup.add(rightLeg);
+
+      // Tangan
+      const armGeo = new THREE.CylinderGeometry(0.09, 0.09, 0.45, 12);
+      leftArm = new THREE.Mesh(armGeo, clothMat);
+      leftArm.position.set(-0.52, 0.9, 0);
+      playerGroup.add(leftArm);
+
+      rightArm = new THREE.Mesh(armGeo, clothMat);
+      rightArm.position.set(0.52, 0.9, 0);
+      playerGroup.add(rightArm);
+
+      // Bayang Ringan
+      const shadowGeo = new THREE.CircleGeometry(0.65, 24);
+      const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.2 });
+      const pShadow = new THREE.Mesh(shadowGeo, shadowMat);
+      pShadow.rotation.x = -Math.PI / 2;
+      pShadow.position.y = 0.02;
+      playerGroup.add(pShadow);
+
+      playerGroup.position.set(0, 0, 7.5);
+      scene.add(playerGroup);
+    }
+
+    /* =========================================================
+       5. SISTEM PENUKARAN TEMA VISUAL 3 LEVEL & PAPAN TANDA 3D
+       ========================================================= */
+    function updateLevelVisualTheme(level) {
+      const palette = LEVEL_PALETTES[level];
+
+      // Kemas kini lantai & dinding
+      if (floorMat) floorMat.color.setHex(palette.floor);
+      wallMeshes.forEach(w => w.material.color.setHex(palette.walls));
+
+      // Kemas kini Fog & Scene background
+      scene.background.setHex(palette.fog);
+      scene.fog.color.setHex(palette.fog);
+
+      // Kemas kini Papan Tanda 3D Terapung di Tengah Pasar Raya
+      if (levelSignSprite) scene.remove(levelSignSprite);
+      levelSignSprite = createTextSprite(`★ TAHAP ${level}: ${palette.name.toUpperCase()} ★`, palette.levelSignFg, palette.levelSignBg);
+      levelSignSprite.position.set(0, 6.2, -1);
+      levelSignSprite.scale.set(6.0, 1.4, 1);
+      scene.add(levelSignSprite);
+
+      // Urus Kaunter Khas Master Sastera (Level 3 Sahaja)
+      if (level === 3) {
+        if (!masterAltarMesh) {
+          masterAltarMesh = new THREE.Group();
+          // Meja altar emas
+          const altarGeo = new THREE.CylinderGeometry(1.2, 1.4, 1.2, 32);
+          const altarMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.8, roughness: 0.2 });
+          const altar = new THREE.Mesh(altarGeo, altarMat);
+          altar.position.y = 0.6;
+          masterAltarMesh.add(altar);
+
+          // Pancaran Cahaya Emas
+          const glowGeo = new THREE.TorusGeometry(1.5, 0.08, 16, 32);
+          const glowMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+          const glowRing = new THREE.Mesh(glowGeo, glowMat);
+          glowRing.rotation.x = Math.PI / 2;
+          glowRing.position.y = 0.05;
+          masterAltarMesh.add(glowRing);
+
+          // Label Altar
+          const altarLabel = createTextSprite("KAUNTER MASTER SASTERA", "#78350f", "#fef3c7");
+          altarLabel.position.set(0, 2.2, 0);
+          altarLabel.scale.set(3.2, 0.85, 1);
+          masterAltarMesh.add(altarLabel);
+
+          masterAltarMesh.position.set(0, 0, -2);
+          scene.add(masterAltarMesh);
+          // Collider padat supaya watak boleh jalan dekat dengan selamat
+          colliders.push({ minX: -1.3, maxX: 1.3, minZ: -3.3, maxZ: -0.7 });
+        }
+      } else {
+        if (masterAltarMesh) {
+          scene.remove(masterAltarMesh);
+          masterAltarMesh = null;
+          // Buang collider altar
+          colliders = colliders.filter(c => !(c.minX === -1.3 && c.maxX === 1.3));
+        }
+      }
+
+      // Kemas kini HUD Badges
+      const badgeEl = document.getElementById('hud-level-badge');
+      badgeEl.className = `px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${palette.hudClass}`;
+      badgeEl.innerText = `LEVEL ${level}`;
+
+      const avatarEl = document.getElementById('hud-avatar');
+      avatarEl.className = `w-10 h-10 rounded-full ${palette.hudAvatar} text-white flex items-center justify-center font-bold text-lg shadow-sm transition-colors duration-500`;
+    }
+
+    /* =========================================================
+       6. PENJANAAN ITEM 3D MENGIKUT LEVEL (5 ITEM + PENGGANGGU)
+       ========================================================= */
+    function spawnLevelItems(level) {
+      // Padam item lama dari scene
+      interactiveItemMeshes.forEach(mesh => scene.remove(mesh));
+      interactiveItemMeshes = [];
+      gameState.currentLevelItems = [];
+
+      // Dapatkan 5 soalan untuk level ini
+      const levelQuestions = quizBank.filter(q => q.level === level && q.aktif).slice(0, 5);
+
+      // Konfigurasi Kedudukan Item
+      let spawnCoordinates = [];
+      if (level === 1) {
+        // Level 1: 5 item mudah di Zon Seru & koridor tengah
+        spawnCoordinates = [
+          { x: -6.2, z: -5.0, name: "Modul Seru 1" },
+          { x: -6.2, z: -2.5, name: "Modul Seru 2" },
+          { x: -6.2, z: 0.0,  name: "Modul Seru 3" },
+          { x: -6.2, z: 2.5,  name: "Modul Seru 4" },
+          { x: 0.0,  z: 1.5,  name: "Modul Asas 5" }
+        ];
+      } else if (level === 2) {
+        // Level 2: 5 item fakta + 3 item pengganggu (decoy)
+        spawnCoordinates = [
+          { x: -6.2, z: -4.0, name: "Fakta Seru", isDecoy: false },
+          { x: -1.2, z: -3.5, name: "Fakta Gunung", isDecoy: false },
+          { x: 4.8,  z: -2.0, name: "Fakta Petani", isDecoy: false },
+          { x: 6.2,  z: 2.0,  name: "Fakta Angin", isDecoy: false },
+          { x: 0.0,  z: -6.5, name: "Sintesis Fakta", isDecoy: false },
+          // ITEM PENGGANGGU (DECOY - TIDAK BERI MARKAH)
+          { x: -4.8, z: 3.5,  name: "Bungkusan Kosong", isDecoy: true },
+          { x: 1.5,  z: 4.0,  name: "Sampel Rosak", isDecoy: true },
+          { x: 7.2,  z: -5.5, name: "Resit Terpakai", isDecoy: true }
+        ];
+      } else if (level === 3) {
+        // Level 3: 5 item analisis master sastera diletakkan di laluan terbuka yang bebas halangan
+        spawnCoordinates = [
+          { x: -5.5, z: 2.0,  name: "Analisis Seru" },
+          { x: 5.5,  z: 2.0,  name: "Gaya Bahasa Gunung" },
+          { x: 0.0,  z: 3.5,  name: "Kritikan Sosial Petani" },
+          { x: -5.5, z: -5.5, name: "Falsafah Angin" },
+          { x: 5.5,  z: -5.5, name: "Amanat Kebangsaan" }
+        ];
+      }
+
+      // Bina Mesh Item 3D
+      let questionIndex = 0;
+      spawnCoordinates.forEach((coord, idx) => {
+        const itemGroup = new THREE.Group();
+        const isDecoy = coord.isDecoy === true;
+        const linkedQuestion = isDecoy ? null : levelQuestions[questionIndex++];
+
+        // Warna & Bentuk Mesh
+        let itemColor = isDecoy ? 0x94a3b8 : (level === 1 ? 0xf43f5e : (level === 2 ? 0xa855f7 : 0xf59e0b));
+
+        const boxGeo = new THREE.BoxGeometry(0.65, 0.8, 0.25);
+        const boxMat = new THREE.MeshStandardMaterial({
+          color: itemColor,
+          emissive: itemColor,
+          emissiveIntensity: isDecoy ? 0.1 : 0.45,
+          roughness: 0.3
+        });
+        const bookMesh = new THREE.Mesh(boxGeo, boxMat);
+        bookMesh.castShadow = true;
+        itemGroup.add(bookMesh);
+
+        // Lingkaran Aura Cahaya (Hanya untuk item sah)
+        if (!isDecoy) {
+          const ringGeo = new THREE.TorusGeometry(0.68, 0.03, 16, 32);
+          const ringMat = new THREE.MeshBasicMaterial({ color: level === 3 ? 0xfef08a : 0xffffff });
+          const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+          ringMesh.rotation.x = Math.PI / 2;
+          itemGroup.add(ringMesh);
+
+          const light = new THREE.PointLight(itemColor, 1.3, 3.8);
+          light.position.set(0, 0, 0);
+          itemGroup.add(light);
+        }
+
+        // Label Terapung
+        const labelText = isDecoy ? "⚠️ Barang Pengganggu" : `Naskhah #${questionIndex}`;
+        const labelSprite = createTextSprite(labelText, isDecoy ? "#475569" : "#ffffff", isDecoy ? "#e2e8f0" : (level === 3 ? "#78350f" : "#ec4899"));
+        labelSprite.position.set(0, 1.05, 0);
+        labelSprite.scale.set(2.2, 0.7, 1);
+        itemGroup.add(labelSprite);
+
+        itemGroup.position.set(coord.x, 1.2, coord.z);
+        itemGroup.userData = {
+          uid: idx + 1,
+          isDecoy: isDecoy,
+          questionData: linkedQuestion,
+          initialY: 1.2,
+          collected: false
+        };
+
+        scene.add(itemGroup);
+        interactiveItemMeshes.push(itemGroup);
+        gameState.currentLevelItems.push(itemGroup.userData);
+      });
+
+      // Kemas kini HUD
+      document.getElementById('hud-items').innerText = `0/5`;
+      document.getElementById('guide-text').innerText = level === 1
+        ? `Tingkat 1: Cari 5 modul naskhah bercahaya di Zon Seru!`
+        : (level === 2 ? `Tingkat 2: Cari 5 fakta sebenar. Awas terhadap item pengganggu!` : `Tingkat 3: Tuju ke Kaunter Master Sastera untuk 5 analisis mencabar!`);
+    }
+
+    /* =========================================================
+       7. KAWALAN PERGERAKAN WATAK & JOYSTICK
+       ========================================================= */
+    function setupInputListeners() {
+      window.addEventListener('keydown', (e) => {
+        keysPressed[e.key.toLowerCase()] = true;
+        if ((e.key.toLowerCase() === 'e' || e.code === 'KeyE') && gameState.activeInteractItem) {
+          triggerPickupAction();
+        }
+      });
+      window.addEventListener('keyup', (e) => {
+        keysPressed[e.key.toLowerCase()] = false;
+      });
+    }
+
+    function setupJoystick() {
+      const zone = document.getElementById('joystick-zone');
+      const knob = document.getElementById('joystick-knob');
+      let startX = 0, startY = 0;
+      let activeTouchId = null;
+
+      function handleStart(e) {
+        audioSynth.init();
+        if (e.changedTouches) {
+          const touch = e.changedTouches[0];
+          activeTouchId = touch.identifier;
+          const rect = zone.getBoundingClientRect();
+          startX = rect.left + rect.width / 2;
+          startY = rect.top + rect.height / 2;
+          joystickState.active = true;
+          handleMove(e);
+        } else {
+          const rect = zone.getBoundingClientRect();
+          startX = rect.left + rect.width / 2;
+          startY = rect.top + rect.height / 2;
+          joystickState.active = true;
+          handleMove(e);
+        }
+      }
+
+      function handleMove(e) {
+        if (!joystickState.active) return;
+        let touch = e;
+        if (e.touches) {
+          for (let i = 0; i < e.touches.length; i++) {
+            if (e.touches[i].identifier === activeTouchId) {
+              touch = e.touches[i];
+              break;
+            }
+          }
+        }
+        if (!touch) return;
+
+        const rect = zone.getBoundingClientRect();
+        const maxRadius = rect.width / 2 - 8;
+        const dx = touch.clientX - startX;
+        const dy = touch.clientY - startY;
+        const dist = Math.min(Math.sqrt(dx * dx + dy * dy), maxRadius);
+        const angle = Math.atan2(dy, dx);
+
+        const clampedX = Math.cos(angle) * dist;
+        const clampedY = Math.sin(angle) * dist;
+
+        knob.style.transform = `translate(${clampedX}px, ${clampedY}px)`;
+        joystickState.x = clampedX / maxRadius;
+        joystickState.y = clampedY / maxRadius;
+      }
+
+      function handleEnd(e) {
+        if (e && e.changedTouches) {
+          for (let i = 0; i < e.changedTouches.length; i++) {
+            if (e.changedTouches[i].identifier === activeTouchId) {
+              joystickState.active = false;
+              joystickState.x = 0;
+              joystickState.y = 0;
+              knob.style.transform = `translate(0px, 0px)`;
+              activeTouchId = null;
+              break;
+            }
+          }
+        } else {
+          joystickState.active = false;
+          joystickState.x = 0;
+          joystickState.y = 0;
+          knob.style.transform = `translate(0px, 0px)`;
+        }
+      }
+
+      zone.addEventListener('touchstart', handleStart, { passive: false });
+      window.addEventListener('touchmove', handleMove, { passive: false });
+      window.addEventListener('touchend', handleEnd, { passive: false });
+      window.addEventListener('touchcancel', handleEnd, { passive: false });
+    }
+
+    function canMoveTo(nextX, nextZ) {
+      const playerRadius = 0.45;
+      if (nextX < -11.5 || nextX > 11.5 || nextZ < -9.5 || nextZ > 9.5) return false;
+
+      for (const col of colliders) {
+        if (
+          nextX + playerRadius > col.minX &&
+          nextX - playerRadius < col.maxX &&
+          nextZ + playerRadius > col.minZ &&
+          nextZ - playerRadius < col.maxZ
+        ) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    /* =========================================================
+       8. GELUNG PERMAINAN & ANIMASI (GAME LOOP)
+       ========================================================= */
+    function animate() {
+      requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+      const time = clock.getElapsedTime();
+
+      // Animasi Putaran Barangan Interaktif
+      interactiveItemMeshes.forEach((itemGroup) => {
+        if (!itemGroup.userData.collected) {
+          itemGroup.rotation.y += 1.4 * delta;
+          itemGroup.position.y = itemGroup.userData.initialY + Math.sin(time * 3 + itemGroup.userData.uid) * 0.12;
+        }
+      });
+
+      // Animasi Kaunter Master Altar Level 3
+      if (masterAltarMesh) {
+        masterAltarMesh.children[1].rotation.z += 1.0 * delta; // Putar gelang cahaya
+      }
+
+      // Pergerakan Pemain
+      if (gameState.isGameRunning && playerGroup) {
+        updatePlayerMovement(delta, time);
+        checkItemProximity();
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    function updatePlayerMovement(delta, time) {
+      const moveSpeed = 5.5;
+      let moveX = 0;
+      let moveZ = 0;
+
+      if (keysPressed['w'] || keysPressed['arrowup']) moveZ -= 1;
+      if (keysPressed['s'] || keysPressed['arrowdown']) moveZ += 1;
+      if (keysPressed['a'] || keysPressed['arrowleft']) moveX -= 1;
+      if (keysPressed['d'] || keysPressed['arrowright']) moveX += 1;
+
+      if (joystickState.active) {
+        moveX = joystickState.x;
+        moveZ = joystickState.y;
+      }
+
+      const length = Math.sqrt(moveX * moveX + moveZ * moveZ);
+      const isMoving = length > 0.1;
+
+      if (isMoving) {
+        const normX = (moveX / (length > 1 ? length : 1)) * moveSpeed * delta;
+        const normZ = (moveZ / (length > 1 ? length : 1)) * moveSpeed * delta;
+
+        const currentX = playerGroup.position.x;
+        const currentZ = playerGroup.position.z;
+
+        if (canMoveTo(currentX + normX, currentZ)) playerGroup.position.x += normX;
+        if (canMoveTo(playerGroup.position.x, currentZ + normZ)) playerGroup.position.z += normZ;
+
+        playerGroup.rotation.y = Math.atan2(moveX, moveZ);
+
+        // Hayunan Kaki & Tangan
+        const legSwing = Math.sin(time * 14) * 0.55;
+        leftLeg.rotation.x = legSwing;
+        rightLeg.rotation.x = -legSwing;
+        leftArm.rotation.x = -legSwing * 0.8;
+        rightArm.rotation.x = legSwing * 0.8;
+        playerBody.position.y = 0.85 + Math.abs(Math.sin(time * 14)) * 0.05;
+      } else {
+        leftLeg.rotation.x = 0;
+        rightLeg.rotation.x = 0;
+        leftArm.rotation.x = 0;
+        rightArm.rotation.x = 0;
+        playerBody.position.y = 0.85 + Math.sin(time * 2.5) * 0.02;
+        headMesh.position.y = 1.6 + Math.sin(time * 2.5) * 0.015;
+      }
+
+      // Kamera Orang Ketiga
+      const cameraOffset = new THREE.Vector3(0, 7.5, 9.5);
+      const targetCamPos = playerGroup.position.clone().add(cameraOffset);
+      camera.position.lerp(targetCamPos, 0.08);
+      camera.lookAt(playerGroup.position.x, 1.2, playerGroup.position.z - 0.5);
+    }
+
+    function checkItemProximity() {
+      // Tingkatkan jarak interaksi kepada 2.8 unit supaya sentiasa mudah dikesan
+      const interactionDistance = 2.8;
+      let foundNearby = null;
+
+      interactiveItemMeshes.forEach((mesh) => {
+        if (!mesh.userData.collected) {
+          const dist = playerGroup.position.distanceTo(mesh.position);
+          if (dist < interactionDistance) {
+            foundNearby = mesh;
+          }
+        }
+      });
+
+      const promptEl = document.getElementById('pickup-prompt');
+      if (foundNearby) {
+        gameState.activeInteractItem = foundNearby;
+        promptEl.classList.remove('hidden');
+
+        if (foundNearby.userData.isDecoy) {
+          document.getElementById('pickup-label').innerHTML = `PERIKSA ITEM <span class="text-xs bg-white/30 px-1.5 py-0.5 rounded ml-1 font-mono hidden md:inline">[E]</span>`;
+        } else {
+          document.getElementById('pickup-label').innerHTML = `TEKAN AMBIL <span class="text-xs bg-white/30 px-1.5 py-0.5 rounded ml-1 font-mono hidden md:inline">[E]</span>`;
+        }
+      } else {
+        gameState.activeInteractItem = null;
+        promptEl.classList.add('hidden');
+      }
+    }
+
+    function onWindowResize() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const aspect = width / height;
+
+      camera.aspect = aspect;
+      // Penyesuaian adaptif: sudut pandang lebih luas bagi mod potret pada telefon pintar
+      camera.fov = aspect < 1 ? 65 : 52;
+      camera.updateProjectionMatrix();
+
+      renderer.setSize(width, height);
+      // Hadkan nisbah piksel maksimum 1.5 untuk memelihara prestasi peranti berkuasa rendah
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    }
+
+    /* =========================================================
+       9. ALIRAN PERMAINAN & KUIZ PENDIDIKAN
+       ========================================================= */
+    function startGame() {
+      audioSynth.init();
+      audioSynth.playTone(440, 'triangle', 0.2);
+
+      const nameInput = document.getElementById('input-player-name').value.trim();
+      const classInput = document.getElementById('input-player-class').value.trim();
+      if (nameInput) gameState.playerName = nameInput;
+      if (classInput) gameState.playerClass = classInput;
+
+      // Jana ID Percubaan Unik untuk sesi ini (kekal sama jika penghantaran semula dibuat)
+      if (!gameState.attemptId) {
+        gameState.attemptId = 'KMK-' + Math.random().toString(36).substring(2, 7).toUpperCase() + '-' + Date.now().toString().slice(-4);
+      }
+      gameState.sheetsSubmission.submitted = false;
+      gameState.sheetsSubmission.isSubmitting = false;
+      gameState.sheetsSubmission.error = false;
+
+      document.getElementById('hud-name').innerText = gameState.playerName;
+      document.getElementById('hud-class-tag').innerText = gameState.playerClass;
+
+      document.getElementById('modal-start').classList.add('hidden');
+      gameState.isGameRunning = true;
+      gameState.startTime = Date.now();
+
+      // Mulakan Pemasa
+      clearInterval(gameState.timerInterval);
+      gameState.elapsedSeconds = 0;
+      gameState.timerInterval = setInterval(updateTimerHUD, 1000);
+    }
+
+    function updateTimerHUD() {
+      gameState.elapsedSeconds++;
+      const mins = String(Math.floor(gameState.elapsedSeconds / 60)).padStart(2, '0');
+      const secs = String(gameState.elapsedSeconds % 60).padStart(2, '0');
+      document.getElementById('hud-timer').innerText = `${mins}:${secs}`;
+
+      // Semakan had masa jika diaktifkan guru
+      if (gameState.config.timerEnabled) {
+        const maxSeconds = gameState.config.timerMinutes * 60;
+        if (gameState.elapsedSeconds >= maxSeconds) {
+          clearInterval(gameState.timerInterval);
+          gameState.isGameRunning = false;
+          showNotification("Masa sesi telah tamat! Mengira keputusan semasa...", true);
+          evaluateCurrentLevelResult();
+        }
+      }
+    }
+
+    function triggerPickupAction() {
+      if (!gameState.activeInteractItem || gameState.activeInteractItem.userData.collected) return;
+
+      const itemMesh = gameState.activeInteractItem;
+      const uData = itemMesh.userData;
+
+      // KES 1: ITEM PENGGANGGU (DECOY - LEVEL 2)
+      if (uData.isDecoy) {
+        audioSynth.playDecoy();
+        uData.collected = true;
+        scene.remove(itemMesh);
+        document.getElementById('pickup-prompt').classList.add('hidden');
+        gameState.activeInteractItem = null;
+
+        // Tunjukkan amaran decoy
+        const toast = document.getElementById('decoy-toast');
+        toast.classList.remove('opacity-0', 'pointer-events-none', '-translate-y-2');
+        toast.classList.add('opacity-100', 'translate-y-0');
+        setTimeout(() => {
+          toast.classList.remove('opacity-100', 'translate-y-0');
+          toast.classList.add('opacity-0', 'pointer-events-none', '-translate-y-2');
+        }, 2500);
+        return;
+      }
+
+      // KES 2: ITEM SOALAN SASTERA SEBENAR
+      audioSynth.playCollect();
+      openQuizModal(uData.questionData, itemMesh);
+    }
+
+    let activeQuizMesh = null;
+    function openQuizModal(quizData, meshRef) {
+      gameState.isGameRunning = false;
+      activeQuizMesh = meshRef;
+
+      document.getElementById('quiz-level-tag').innerText = `Level ${quizData.level}`;
+      document.getElementById('quiz-item-badge').innerText = `Soalan ${gameState.levelData[gameState.currentLevel].answeredCount + 1}/5`;
+      document.getElementById('quiz-cerpen-text').innerText = `Cerpen: ${quizData.cerpen}`;
+      document.getElementById('quiz-konstruk-text').innerText = `Konstruk: ${quizData.konstruk}`;
+      document.getElementById('quiz-question').innerText = quizData.soalan;
+
+      // Status Pengesahan Guru
+      const statusBadge = document.getElementById('quiz-status-badge');
+      if (quizData.statusPengesahan === "Disahkan Guru") {
+        statusBadge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300";
+        statusBadge.innerHTML = `<i class="fa-solid fa-circle-check mr-1 text-emerald-600"></i> Sah Guru`;
+      } else {
+        statusBadge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 border border-amber-300";
+        statusBadge.innerHTML = `<i class="fa-solid fa-vial mr-1 text-amber-600"></i> Draf Ujian Guru`;
+      }
+
+      document.getElementById('quiz-feedback-box').classList.add('hidden');
+      const optContainer = document.getElementById('quiz-options');
+      optContainer.innerHTML = '';
+
+      quizData.pilihan.forEach((optText, optIdx) => {
+        const btn = document.createElement('button');
+        btn.className = "w-full text-left p-3.5 rounded-2xl border-2 border-pink-100 hover:border-pink-400 bg-pink-50/40 hover:bg-pink-100/50 text-xs md:text-sm font-semibold text-gray-800 transition duration-150 flex items-center justify-between";
+        btn.innerHTML = `<span>${optText}</span><i class="fa-regular fa-circle text-pink-300"></i>`;
+        btn.onclick = () => submitAnswer(quizData, optIdx, btn);
+        optContainer.appendChild(btn);
+      });
+
+      document.getElementById('modal-quiz').classList.remove('hidden');
+    }
+
+    function submitAnswer(quizData, chosenIdx, selectedBtn) {
+      const isCorrect = chosenIdx === quizData.jawapan;
+      const lvl = gameState.currentLevel;
+
+      // Lumpuhkan semua butang pilihan
+      const allBtns = document.getElementById('quiz-options').querySelectorAll('button');
+      allBtns.forEach((b, idx) => {
+        b.disabled = true;
+        if (idx === quizData.jawapan) {
+          b.className = "w-full text-left p-3.5 rounded-2xl border-2 border-emerald-500 bg-emerald-50 text-emerald-900 text-xs md:text-sm font-bold flex items-center justify-between";
+          b.querySelector('i').className = "fa-solid fa-circle-check text-emerald-500";
+        } else if (b === selectedBtn) {
+          b.className = "w-full text-left p-3.5 rounded-2xl border-2 border-rose-400 bg-rose-50 text-rose-900 text-xs md:text-sm font-bold flex items-center justify-between";
+          b.querySelector('i').className = "fa-solid fa-circle-xmark text-rose-500";
+        }
+      });
+
+      // Kemas kini data level
+      gameState.levelData[lvl].answeredCount++;
+      if (isCorrect) {
+        audioSynth.playCorrect();
+        gameState.levelData[lvl].correctCount++;
+        gameState.levelData[lvl].questionScore += 100;
+        gameState.totalScore += 100;
+      } else {
+        audioSynth.playWrong();
+      }
+
+      // Tandakan mesh sebagai telah dikutip (PENCEGAHAN KUTIPAN BERULANG)
+      if (activeQuizMesh && !activeQuizMesh.userData.collected) {
+        activeQuizMesh.userData.collected = true;
+        scene.remove(activeQuizMesh);
+      }
+
+      // Kemas kini HUD
+      document.getElementById('hud-score').innerText = gameState.totalScore;
+      document.getElementById('hud-items').innerText = `${gameState.levelData[lvl].answeredCount}/5`;
+
+      // Paparkan Kotak Maklum Balas Penerangan
+      const fbBox = document.getElementById('quiz-feedback-box');
+      const fbTitle = document.getElementById('quiz-feedback-title');
+      const fbDesc = document.getElementById('quiz-feedback-desc');
+
+      fbBox.classList.remove('hidden');
+      if (isCorrect) {
+        fbBox.className = "mt-4 p-4 rounded-2xl border border-emerald-200 bg-emerald-50/80";
+        fbTitle.className = "font-extrabold text-sm text-emerald-800 flex items-center space-x-1.5";
+        fbTitle.innerHTML = `<i class="fa-solid fa-star text-emerald-600"></i><span>Tahniah! Jawapan Tepat (+100 Mata)</span>`;
+      } else {
+        fbBox.className = "mt-4 p-4 rounded-2xl border border-amber-200 bg-amber-50/80";
+        fbTitle.className = "font-extrabold text-sm text-amber-800 flex items-center space-x-1.5";
+        fbTitle.innerHTML = `<i class="fa-solid fa-lightbulb text-amber-600"></i><span>Ulasan Jawapan Didaktik</span>`;
+      }
+      fbDesc.innerText = quizData.penerangan;
+    }
+
+    function closeQuizModal() {
+      document.getElementById('modal-quiz').classList.add('hidden');
+      document.getElementById('pickup-prompt').classList.add('hidden');
+      gameState.activeInteractItem = null;
+
+      // Semak sama ada semua 5 soalan level ini telah dijawab
+      const lvl = gameState.currentLevel;
+      if (gameState.levelData[lvl].answeredCount >= 5) {
+        evaluateCurrentLevelResult();
+      } else {
+        gameState.isGameRunning = true;
+      }
+    }
+
+    /* =========================================================
+       10. LOGIK PERALIHAN LEVEL, SYARAT KELAYAKAN & SIJIL DIGITAL
+       ========================================================= */
+    function evaluateCurrentLevelResult() {
+      gameState.isGameRunning = false;
+      const lvl = gameState.currentLevel;
+      const data = gameState.levelData[lvl];
+
+      // Tentukan syarat kelayakan
+      let passThreshold = lvl === 1 ? gameState.config.l1PassThreshold : (lvl === 2 ? gameState.config.l2PassThreshold : gameState.config.l3PassThreshold);
+      const isPassed = data.correctCount >= passThreshold;
+
+      // Bonus Mata Kelulusan Mengikut Level
+      let bonusScore = 0;
+      if (isPassed) {
+        bonusScore = lvl === 1 ? 100 : (lvl === 2 ? 200 : 300);
+        data.bonus = bonusScore;
+        gameState.totalScore += bonusScore;
+        data.completed = true;
+        gameState.levelPassedRecord[lvl] = true;
+        audioSynth.playLevelComplete();
+      }
+
+      document.getElementById('hud-score').innerText = gameState.totalScore;
+
+      // Paparkan Modal Keputusan Level
+      const modal = document.getElementById('modal-level-result');
+      const iconWrap = document.getElementById('level-result-icon');
+      const titleEl = document.getElementById('level-result-title');
+      const subEl = document.getElementById('level-result-subtitle');
+      const descEl = document.getElementById('level-result-desc');
+      const btnNext = document.getElementById('btn-next-level');
+      const btnRetry = document.getElementById('btn-retry-level');
+
+      document.getElementById('level-result-correct').innerText = `${data.correctCount} / 5 Betul`;
+      document.getElementById('level-result-threshold').innerText = `≥ ${passThreshold} / 5 Diperlukan`;
+      document.getElementById('level-result-score').innerText = `${data.questionScore} Mata`;
+      document.getElementById('level-result-bonus').innerText = `+${bonusScore} Mata`;
+
+      if (isPassed) {
+        iconWrap.className = "w-20 h-20 mx-auto rounded-3xl flex items-center justify-center text-white text-3xl shadow-lg mb-3 bg-gradient-to-tr from-emerald-400 to-teal-500 shadow-emerald-500/30";
+        iconWrap.innerHTML = `<i class="fa-solid fa-trophy animate-bounce"></i>`;
+        titleEl.innerText = `LEVEL ${lvl} LULUS!`;
+        subEl.innerText = `Lencana: ${data.badge}`;
+        subEl.className = "text-xs font-extrabold uppercase tracking-widest mt-0.5 text-emerald-600";
+        descEl.innerText = `Tahniah! Anda telah membuktikan kefahaman kukuh dan memenuhi syarat kelayakan Level ${lvl}.`;
+        document.getElementById('level-result-badge-earned').innerText = `🎖️ ${data.badge}`;
+
+        btnNext.classList.remove('hidden');
+        btnRetry.classList.add('hidden');
+        if (lvl === 3) {
+          btnNext.innerHTML = `<span>LIHAT KEPUTUSAN & SIJIL DIGITAL</span><i class="fa-solid fa-award ml-1.5"></i>`;
+        } else {
+          btnNext.innerHTML = `<span>BUKA LEVEL ${lvl + 1}</span><i class="fa-solid fa-arrow-right ml-1.5"></i>`;
+        }
+      } else {
+        iconWrap.className = "w-20 h-20 mx-auto rounded-3xl flex items-center justify-center text-white text-3xl shadow-lg mb-3 bg-gradient-to-tr from-rose-500 to-red-600 shadow-rose-500/30";
+        iconWrap.innerHTML = `<i class="fa-solid fa-triangle-exclamation animate-pulse"></i>`;
+        titleEl.innerText = `LEVEL ${lvl} BELUM LULUS`;
+        subEl.innerText = `Percubaan Diperlukan Semula`;
+        subEl.className = "text-xs font-extrabold uppercase tracking-widest mt-0.5 text-rose-600";
+        descEl.innerText = `Anda memperoleh ${data.correctCount}/5 betul (diperlukan sekurang-kurangnya ${passThreshold}/5). Jangan putus asa, mari cuba sekali lagi!`;
+        document.getElementById('level-result-badge-earned').innerText = `Terkunci`;
+
+        btnNext.classList.add('hidden');
+        btnRetry.classList.remove('hidden');
+      }
+
+      modal.classList.remove('hidden');
+    }
+
+    function retryCurrentLevel() {
+      document.getElementById('modal-level-result').classList.add('hidden');
+      const lvl = gameState.currentLevel;
+
+      // Reset kemajuan level semasa TANPA menggandakan skor
+      gameState.totalScore -= (gameState.levelData[lvl].questionScore + gameState.levelData[lvl].bonus);
+      gameState.levelData[lvl].correctCount = 0;
+      gameState.levelData[lvl].answeredCount = 0;
+      gameState.levelData[lvl].questionScore = 0;
+      gameState.levelData[lvl].bonus = 0;
+
+      document.getElementById('hud-score').innerText = gameState.totalScore;
+      document.getElementById('hud-items').innerText = `0/5`;
+
+      // Kembalikan watak ke kedudukan awal
+      playerGroup.position.set(0, 0, 7.5);
+      playerGroup.rotation.set(0, 0, 0);
+
+      // Jana semula item
+      spawnLevelItems(lvl);
+      gameState.isGameRunning = true;
+    }
+
+    function proceedToNextLevel() {
+      document.getElementById('modal-level-result').classList.add('hidden');
+      const current = gameState.currentLevel;
+
+      if (current === 1) {
+        gameState.currentLevel = 2;
+        updateLevelVisualTheme(2);
+        spawnLevelItems(2);
+        playerGroup.position.set(0, 0, 7.5);
+        gameState.isGameRunning = true;
+      } else if (current === 2) {
+        gameState.currentLevel = 3;
+        updateLevelVisualTheme(3);
+        spawnLevelItems(3);
+        playerGroup.position.set(0, 0, 7.5);
+        gameState.isGameRunning = true;
+      } else if (current === 3) {
+        // Semua 3 Level Lulus -> Paparkan Keputusan Keseluruhan & Sijil
+        showGrandVictoryModal();
+      }
+    }
+
+    function showGrandVictoryModal() {
+      gameState.isGameRunning = false;
+      clearInterval(gameState.timerInterval);
+
+      // Mainkan mercun confetti jika disokong
+      if (typeof confetti === 'function') {
+        confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+        setTimeout(() => confetti({ particleCount: 80, angle: 60, spread: 55, origin: { x: 0 } }), 300);
+        setTimeout(() => confetti({ particleCount: 80, angle: 120, spread: 55, origin: { x: 1 } }), 600);
+      }
+
+      // Isi Data Sijil Digital
+      document.getElementById('cert-display-name').innerText = gameState.playerName;
+      document.getElementById('cert-display-class').innerText = gameState.playerClass;
+      document.getElementById('cert-display-time').innerText = document.getElementById('hud-timer').innerText;
+
+      document.getElementById('summary-l1-score').innerText = `${gameState.levelData[1].questionScore + gameState.levelData[1].bonus} Mata`;
+      document.getElementById('summary-l1-correct').innerText = `${gameState.levelData[1].correctCount}/5 Betul`;
+
+      document.getElementById('summary-l2-score').innerText = `${gameState.levelData[2].questionScore + gameState.levelData[2].bonus} Mata`;
+      document.getElementById('summary-l2-correct').innerText = `${gameState.levelData[2].correctCount}/5 Betul`;
+
+      document.getElementById('summary-l3-score').innerText = `${gameState.levelData[3].questionScore + gameState.levelData[3].bonus} Mata`;
+      document.getElementById('summary-l3-correct').innerText = `${gameState.levelData[3].correctCount}/5 Betul`;
+
+      document.getElementById('victory-total-score').innerText = gameState.totalScore;
+
+      document.getElementById('cert-student-name').innerText = gameState.playerName.toUpperCase();
+      document.getElementById('cert-student-class').innerText = gameState.playerClass;
+      document.getElementById('cert-date').innerText = `Tarikh: ${new Date().toLocaleDateString('ms-MY')}`;
+
+      document.getElementById('modal-victory').classList.remove('hidden');
+
+      // Hantar keputusan secara automatik ke Google Sheets
+      submitScoreToGoogleSheets();
+    }
+
+    /* =========================================================
+       10A. INTEGRASI GOOGLE SHEETS VIA GOOGLE APPS SCRIPT WEB APP
+       Struktur Data JSON:
+       {
+         "idPercubaan": "ID_UNIK",
+         "nama": "Nama Pelajar",
+         "kelas": "Kelas",
+         "level1": 4,
+         "level2": 5,
+         "level3": 4
+       }
+       ========================================================= */
+    async function submitScoreToGoogleSheets() {
+      if (gameState.sheetsSubmission.isSubmitting) return;
+
+      const cardEl = document.getElementById('sheets-sync-card');
+      const iconEl = document.getElementById('sheets-status-icon');
+      const titleEl = document.getElementById('sheets-status-title');
+      const descEl = document.getElementById('sheets-status-desc');
+      const retryBtn = document.getElementById('btn-sheets-retry');
+      const attemptIdEl = document.getElementById('sheets-attempt-id');
+
+      if (attemptIdEl) attemptIdEl.innerText = gameState.attemptId;
+
+      const payload = {
+        idPercubaan: gameState.attemptId,
+        nama: gameState.playerName || "Pelajar KMK",
+        kelas: gameState.playerClass || "5 Sastera",
+        level1: Number(gameState.levelData[1].correctCount) || 0,
+        level2: Number(gameState.levelData[2].correctCount) || 0,
+        level3: Number(gameState.levelData[3].correctCount) || 0
+      };
+
+      // Paparkan status sedang diproses
+      gameState.sheetsSubmission.isSubmitting = true;
+      if (retryBtn) retryBtn.classList.add('hidden');
+      if (cardEl) {
+        cardEl.className = "mt-3 p-3 bg-amber-50/70 border border-amber-200 rounded-2xl text-left text-xs transition-all";
+      }
+      if (iconEl) {
+        iconEl.className = "w-6 h-6 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-xs animate-spin";
+        iconEl.innerHTML = `<i class="fa-solid fa-circle-notch"></i>`;
+      }
+      if (titleEl) titleEl.innerText = "Menghantar ke Google Sheets...";
+      if (descEl) descEl.innerText = "Menghantar data keputusan peperiksaan pelajar...";
+
+      try {
+        await fetch(GOOGLE_SCRIPT_WEBAPP_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: {
+            "Content-Type": "text/plain;charset=utf-8"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        // Kerana 'no-cors' menghasilkan opaque response, kami tidak mendakwa data telah disahkan disimpan
+        gameState.sheetsSubmission.attempted = true;
+        gameState.sheetsSubmission.error = null;
+
+        if (cardEl) {
+          cardEl.className = "mt-3 p-3 bg-indigo-50/80 border border-indigo-200 rounded-2xl text-left text-xs transition-all";
+        }
+        if (iconEl) {
+          iconEl.className = "w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs";
+          iconEl.innerHTML = `<i class="fa-solid fa-paper-plane"></i>`;
+        }
+        if (titleEl) {
+          titleEl.className = "font-bold text-indigo-900 text-[11px] sm:text-xs";
+          titleEl.innerText = "Status Penghantaran Rekod";
+        }
+        if (descEl) {
+          descEl.className = "text-[10px] sm:text-[11px] text-indigo-800 font-semibold";
+          descEl.innerText = "Penghantaran markah telah dicuba. Sila semak rekod dengan guru.";
+        }
+        // Kekalkan butang hantar semula aktif
+        if (retryBtn) {
+          retryBtn.classList.remove('hidden');
+          retryBtn.innerText = "Hantar Semula Rekod";
+        }
+      } catch (err) {
+        console.error("Ralat penghantaran ke Google Sheets:", err);
+        gameState.sheetsSubmission.error = err;
+
+        if (cardEl) {
+          cardEl.className = "mt-3 p-3 bg-rose-50 border border-rose-200 rounded-2xl text-left text-xs transition-all";
+        }
+        if (iconEl) {
+          iconEl.className = "w-6 h-6 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-xs";
+          iconEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i>`;
+        }
+        if (titleEl) {
+          titleEl.className = "font-bold text-rose-900 text-[11px] sm:text-xs";
+          titleEl.innerText = "Ralat Sambungan Rangkaian";
+        }
+        if (descEl) {
+          descEl.className = "text-[10px] sm:text-[11px] text-rose-700";
+          descEl.innerText = "Gagal menghubungi pelayan Google Apps Script. Sila cuba lagi.";
+        }
+        if (retryBtn) {
+          retryBtn.classList.remove('hidden');
+          retryBtn.innerText = "Cuba Semula";
+        }
+      } finally {
+        gameState.sheetsSubmission.isSubmitting = false;
+      }
+    }
+
+    function retrySubmitToGoogleSheets() {
+      // Kekalkan attemptId yang sama semasa penghantaran semula
+      submitScoreToGoogleSheets();
+    }
+
+    function restartEntireGame() {
+      document.getElementById('modal-victory').classList.add('hidden');
+
+      // Reset semua pembolehubah permainan & jana ID unik sesi baharu
+      gameState.attemptId = generateUniqueAttemptId();
+      gameState.sheetsSubmission = { isSubmitting: false, attempted: false, error: null };
+      gameState.currentLevel = 1;
+      gameState.totalScore = 0;
+      gameState.elapsedSeconds = 0;
+      for (let i = 1; i <= 3; i++) {
+        gameState.levelData[i] = { correctCount: 0, answeredCount: 0, questionScore: 0, bonus: 0, completed: false, badge: gameState.levelData[i].badge };
+        gameState.levelPassedRecord[i] = false;
+      }
+
+      document.getElementById('hud-score').innerText = '0';
+      document.getElementById('hud-items').innerText = '0/5';
+      document.getElementById('hud-timer').innerText = '00:00';
+
+      playerGroup.position.set(0, 0, 7.5);
+      playerGroup.rotation.set(0, 0, 0);
+
+      updateLevelVisualTheme(1);
+      spawnLevelItems(1);
+
+      document.getElementById('modal-start').classList.remove('hidden');
+    }
+
+    /* =========================================================
+       10B. FUNGSI PENJANAAN & MUAT TURUN SIJIL (PNG & PDF)
+       ========================================================= */
+    async function generateCertCanvas() {
+      const certEl = document.getElementById('digital-certificate');
+      const statusEl = document.getElementById('cert-download-status');
+      statusEl.classList.remove('hidden');
+
+      try {
+        const canvas = await html2canvas(certEl, {
+          scale: 2.5, // Kualiti tinggi untuk cetakan/paparan tajam
+          backgroundColor: '#fffdf7',
+          useCORS: true,
+          logging: false
+        });
+        statusEl.classList.add('hidden');
+        return canvas;
+      } catch (err) {
+        statusEl.classList.add('hidden');
+        console.error('Ralat menjana sijil:', err);
+        return null;
+      }
+    }
+
+    async function downloadCertificatePNG() {
+      const canvas = await generateCertCanvas();
+      if (!canvas) {
+        // Fallback jika html2canvas gagal
+        window.print();
+        return;
+      }
+
+      const imgData = canvas.toDataURL('image/png');
+      const cleanName = (gameState.playerName || 'Pelajar').replace(/[^a-zA-Z0-9]/g, '_');
+      const link = document.createElement('a');
+      link.download = `Sijil_EduMart_KMK_${cleanName}.png`;
+      link.href = imgData;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    async function downloadCertificatePDF() {
+      const canvas = await generateCertCanvas();
+      if (!canvas) {
+        window.print();
+        return;
+      }
+
+      const imgData = canvas.toDataURL('image/png');
+      const cleanName = (gameState.playerName || 'Pelajar').replace(/[^a-zA-Z0-9]/g, '_');
+
+      try {
+        const { jsPDF } = window.jspdf;
+        // Format Landskap A4 atau A5 yang sepadan dengan saiz kad sijil
+        const pdf = new jsPDF({
+          orientation: 'landscape',
+          unit: 'mm',
+          format: 'a5'
+        });
+
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+
+        // Kira dimensi berskala dengan nisbah aspek
+        const imgRatio = canvas.width / canvas.height;
+        let printWidth = pageWidth - 20;
+        let printHeight = printWidth / imgRatio;
+
+        if (printHeight > pageHeight - 20) {
+          printHeight = pageHeight - 20;
+          printWidth = printHeight * imgRatio;
+        }
+
+        const posX = (pageWidth - printWidth) / 2;
+        const posY = (pageHeight - printHeight) / 2;
+
+        pdf.addImage(imgData, 'PNG', posX, posY, printWidth, printHeight);
+        pdf.save(`Sijil_EduMart_KMK_${cleanName}.pdf`);
+      } catch (e) {
+        console.error('Ralat jsPDF:', e);
+        // Fallback terus ke muat turun PNG jika PDF menghadapi masalah
+        downloadCertificatePNG();
+      }
+    }
+
+    /* =========================================================
+       11. PANEL GURU KMK V1.1 (TETAPAN, SOALAN, JSON, REKOD)
+       ========================================================= */
+    function toggleTeacherModal() {
+      const modal = document.getElementById('modal-teacher');
+      if (modal.classList.contains('hidden')) {
+        loadTeacherSettingsUI();
+        renderTeacherQuestionsList('all');
+        updateStudentRecordsUI();
+        modal.classList.remove('hidden');
+      } else {
+        modal.classList.add('hidden');
+      }
+    }
+
+    function switchTeacherTab(tabName) {
+      const tabs = ['settings', 'questions', 'json', 'records'];
+      tabs.forEach(t => {
+        document.getElementById(`teacher-tab-${t}`).classList.add('hidden');
+        document.getElementById(`tab-btn-${t}`).className = "px-3 py-1.5 rounded-xl bg-gray-100 text-gray-600";
+      });
+      document.getElementById(`teacher-tab-${tabName}`).classList.remove('hidden');
+      document.getElementById(`tab-btn-${tabName}`).className = "px-3 py-1.5 rounded-xl bg-indigo-600 text-white";
+
+      if (tabName === 'json') {
+        document.getElementById('json-io-area').value = JSON.stringify(quizBank, null, 2);
+      }
+    }
+
+    function loadTeacherSettingsUI() {
+      document.getElementById('t-l1-active').checked = gameState.config.l1Active;
+      document.getElementById('t-l1-pass').value = gameState.config.l1PassThreshold;
+      document.getElementById('t-l2-active').checked = gameState.config.l2Active;
+      document.getElementById('t-l2-pass').value = gameState.config.l2PassThreshold;
+      document.getElementById('t-l3-active').checked = gameState.config.l3Active;
+      document.getElementById('t-l3-pass').value = gameState.config.l3PassThreshold;
+
+      document.getElementById('t-timer-enabled').checked = gameState.config.timerEnabled;
+      document.getElementById('t-timer-limit').value = gameState.config.timerMinutes;
+    }
+
+    function renderTeacherQuestionsList(levelFilter) {
+      const listContainer = document.getElementById('teacher-quiz-list');
+      listContainer.innerHTML = '';
+
+      const filtered = quizBank.filter(q => levelFilter === 'all' || q.level === levelFilter);
+      filtered.forEach((q) => {
+        const itemBox = document.createElement('div');
+        itemBox.className = "bg-gray-50 p-3.5 rounded-2xl border border-gray-200 text-xs space-y-1.5";
+        itemBox.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-indigo-700">#${q.id} [Level ${q.level}] - Cerpen: ${q.cerpen}</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full ${q.statusPengesahan === 'Disahkan Guru' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'} font-bold">${q.statusPengesahan}</span>
+          </div>
+          <div>
+            <label class="block text-[10px] text-gray-500 font-semibold">Teks Soalan:</label>
+            <input type="text" id="t-q-text-${q.id}" value="${q.soalan}" class="w-full p-2 border border-gray-300 rounded-lg text-xs font-medium">
+          </div>
+          <div>
+            <label class="block text-[10px] text-gray-500 font-semibold">Penerangan / Skema:</label>
+            <input type="text" id="t-q-exp-${q.id}" value="${q.penerangan}" class="w-full p-2 border border-gray-300 rounded-lg text-xs">
+          </div>
+        `;
+        listContainer.appendChild(itemBox);
+      });
+    }
+
+    function filterTeacherQuestions(lvl) {
+      renderTeacherQuestionsList(lvl);
+    }
+
+    function verifyAllQuestions() {
+      quizBank.forEach(q => q.statusPengesahan = "Disahkan Guru");
+      renderTeacherQuestionsList('all');
+      document.getElementById('teacher-verification-banner').classList.add('hidden');
+      alert("Semua 15 soalan telah berjaya disahkan secara rasmi oleh Guru!");
+    }
+
+    function saveTeacherEdits() {
+      // Simpan tetapan
+      gameState.config.l1Active = document.getElementById('t-l1-active').checked;
+      gameState.config.l1PassThreshold = parseInt(document.getElementById('t-l1-pass').value) || 3;
+      gameState.config.l2Active = document.getElementById('t-l2-active').checked;
+      gameState.config.l2PassThreshold = parseInt(document.getElementById('t-l2-pass').value) || 4;
+      gameState.config.l3Active = document.getElementById('t-l3-active').checked;
+      gameState.config.l3PassThreshold = parseInt(document.getElementById('t-l3-pass').value) || 4;
+
+      gameState.config.timerEnabled = document.getElementById('t-timer-enabled').checked;
+      gameState.config.timerMinutes = parseInt(document.getElementById('t-timer-limit').value) || 5;
+
+      // Simpan soalan yang disunting
+      quizBank.forEach(q => {
+        const qInput = document.getElementById(`t-q-text-${q.id}`);
+        const expInput = document.getElementById(`t-q-exp-${q.id}`);
+        if (qInput && qInput.value.trim()) q.soalan = qInput.value.trim();
+        if (expInput && expInput.value.trim()) q.penerangan = expInput.value.trim();
+      });
+
+      const indicator = document.getElementById('teacher-save-indicator');
+      indicator.classList.remove('hidden');
+      setTimeout(() => indicator.classList.add('hidden'), 2000);
+    }
+
+    function exportQuizBankJSON() {
+      const dataStr = JSON.stringify(quizBank, null, 2);
+      const ioArea = document.getElementById('json-io-area');
+      ioArea.value = dataStr;
+      
+      // Fallback cross-platform clipboard copying
+      try {
+        ioArea.select();
+        document.execCommand('copy');
+        alert("Data JSON 15 soalan telah disalin ke papan klip!");
+      } catch (err) {
+        alert("Sila salin teks secara manual dari kotak teks.");
+      }
+    }
+
+    function updateStudentRecordsUI() {
+      const container = document.getElementById('student-records-table');
+      container.innerHTML = `
+        <div class="space-y-1">
+          <div class="flex justify-between font-bold text-gray-800">
+            <span>${gameState.playerName} (${gameState.playerClass})</span>
+            <span class="text-pink-600">${gameState.totalScore} Mata</span>
+          </div>
+          <div class="text-[11px] text-gray-600 flex justify-between">
+            <span>Level 1: ${gameState.levelData[1].correctCount}/5 (${gameState.levelData[1].completed ? 'Lulus' : 'Belum'})</span>
+            <span>Level 2: ${gameState.levelData[2].correctCount}/5 (${gameState.levelData[2].completed ? 'Lulus' : 'Belum'})</span>
+            <span>Level 3: ${gameState.levelData[3].correctCount}/5 (${gameState.levelData[3].completed ? 'Lulus' : 'Belum'})</span>
+          </div>
+        </div>
+      `;
+    }
+
+    /* =========================================================
+       12. PERMULAAN APLIKASI
+       ========================================================= */
+    window.onload = function () {
+      initThree();
+      animate();
+    };
+  </script>
+</body>
+</html>
